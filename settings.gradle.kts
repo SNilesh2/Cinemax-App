@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Cinemax App"
 include(":app")
- 
+include(":core")
