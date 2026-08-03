@@ -1,11 +1,13 @@
 plugins {
     alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.example.cinemaxapp.core.designsystem"
-    compileSdk = 36
+    compileSdk = 35
+
 
     defaultConfig {
         minSdk = 24
@@ -21,6 +23,11 @@ android {
     }
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+    }
+}
 dependencies {
     // Compose
     api(platform(libs.androidx.compose.bom))
@@ -29,6 +36,7 @@ dependencies {
     api(libs.androidx.compose.ui.graphics)
     api(libs.androidx.compose.ui.tooling.preview)
     api(libs.androidx.compose.material.icons.extended)
+    implementation(libs.core.ktx)
 
     // Debug
     debugImplementation(libs.androidx.compose.ui.tooling)

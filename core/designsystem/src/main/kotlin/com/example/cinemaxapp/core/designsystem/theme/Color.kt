@@ -1,4 +1,4 @@
-package com.example.cinemax.core.designsystem.theme
+package com.example.cinemaxapp.core.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 

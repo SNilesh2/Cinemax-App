@@ -1,0 +1,8 @@
+com.example.cinemaxapp.core.designsystem
+drawable ic_apple
+drawable ic_facebook
+drawable ic_google
+drawable ic_logo
+font montserrat_medium
+font montserrat_regular
+font montserrat_semibold

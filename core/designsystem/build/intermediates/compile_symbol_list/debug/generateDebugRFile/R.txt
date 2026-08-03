@@ -1,0 +1,7 @@
+int drawable ic_apple 0x0
+int drawable ic_facebook 0x0
+int drawable ic_google 0x0
+int drawable ic_logo 0x0
+int font montserrat_medium 0x0
+int font montserrat_regular 0x0
+int font montserrat_semibold 0x0

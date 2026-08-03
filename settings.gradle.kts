@@ -24,4 +24,14 @@ dependencyResolutionManagement {
 
 rootProject.name = "Cinemax App"
 include(":app")
-include(":core")
+// Feature modules
+include(":feature:auth")
+
+// Core modules
+include(":core:designsystem")
+// include(":core:ui")
+// include(":core:domain")
+// include(":core:data")
+// include(":core:model")
+// include(":core:common")
+

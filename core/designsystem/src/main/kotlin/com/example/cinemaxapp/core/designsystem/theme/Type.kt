@@ -1,4 +1,4 @@
-package com.example.cinemax.core.designsystem.theme
+package com.example.cinemaxapp.core.designsystem.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Immutable
@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.cinemax.core.designsystem.R
+import com.example.cinemaxapp.core.designsystem.R
 
 // Montserrat Font Family
 val Montserrat = FontFamily(
