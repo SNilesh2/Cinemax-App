@@ -1,4 +1,5 @@
 int drawable ic_apple 0x0
+int drawable ic_back 0x0
 int drawable ic_facebook 0x0
 int drawable ic_google 0x0
 int drawable ic_logo 0x0

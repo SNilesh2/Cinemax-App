@@ -10,4 +10,6 @@ object CinemaxIcons {
     val Google = R.drawable.ic_google
     val Apple = R.drawable.ic_apple
     val Facebook = R.drawable.ic_facebook
+
+    val BackArrow = R.drawable.ic_back
 }
