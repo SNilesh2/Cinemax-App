@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.cinemaxapp.core.designsystem.component.CinemaxButton
+import com.example.cinemaxapp.core.designsystem.component.CinemaxTextField
 import com.example.cinemaxapp.core.designsystem.icon.CinemaxIcons
 import com.example.cinemaxapp.core.designsystem.theme.CinemaxTheme
 
@@ -90,47 +91,34 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(64.dp))
 
         // Email field
-        OutlinedTextField(
+        CinemaxTextField(
             value = email,
-            onValueChange = { email = it },
-            label = {
-                Text("Email Address")
-            },
-            placeholder = {
-                Text(
-                    text = "Tiffanyjearsey@gmail.com"
-                )
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            singleLine = true,
+            onValueChange = {email = it},
+            label = "Email Address",
+            placeholder = "Tiffanyjearsey@gmail.com",
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(
+        // Password field
+        CinemaxTextField(
             value = password,
-            onValueChange = { password = it },
-            label = {
-                Text("Password")
-            },
-            placeholder = {
-                Text(
-                    text = "password123"
-                )
-            },
+            onValueChange = {password = it},
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            singleLine = true,
-            visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            label = "Password",
+            placeholder = "password123",
+            visualTransformation = if(isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
             trailingIcon = {
-                IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                IconButton(onClick = {
+                    isPasswordVisible = !isPasswordVisible
+                }) {
                     Icon(
-                        imageVector = if (isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                        imageVector = if(isPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                         contentDescription = "Toggle password visibility",
                     )
                 }
-            },
+            }
         )
 
         Spacer(modifier = Modifier.height(8.dp))

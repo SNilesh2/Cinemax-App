@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import com.example.cinemaxapp.core.designsystem.theme.CinemaxTheme
 import com.example.cinemaxapp.feature.auth.login.LoginScreen
 import com.example.cinemaxapp.feature.auth.loginsignup.LoginSignupScreen
+import com.example.cinemaxapp.feature.auth.signup.SignUpScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -16,9 +17,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CinemaxTheme {
-                LoginScreen { email, password ->
-                    // TODO: Handle login with email and password
-                }
+                 SignUpScreen { name, email, password ->
+                     //TODO
+                 }
             }
         }
     }

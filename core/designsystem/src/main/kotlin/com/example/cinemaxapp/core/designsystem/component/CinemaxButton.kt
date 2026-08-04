@@ -22,12 +22,14 @@ fun CinemaxButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     containerColor: Color = CinemaxTheme.colors.blueAccent,
     contentColor: Color = CinemaxTheme.colors.white,
 ) {
     Button(
         onClick = onClick,
         shape = CinemaxShapes.extraLarge,
+        enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor
@@ -45,17 +47,6 @@ fun CinemaxButton(
     }
 }
 
-// Preview
-@Preview(name = "Extra Large Button - Primary", showBackground = true, backgroundColor = 0xFF1F1D2B)
-@Composable
-private fun CinemaxButtonPreview() {
-    CinemaxTheme {
-        CinemaxButton(
-            text = "Sign Up",
-            onClick = {},
-        )
-    }
-}
 
 
 
