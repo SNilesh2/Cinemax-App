@@ -10,6 +10,7 @@ import com.example.cinemaxapp.feature.auth.loginsignup.LoginSignupScreen
 import com.example.cinemaxapp.feature.auth.newpassword.NewPasswordScreen
 import com.example.cinemaxapp.feature.auth.resetpassword.ResetPasswordScreen
 import com.example.cinemaxapp.feature.auth.signup.SignUpScreen
+import com.example.cinemaxapp.feature.auth.splash.SplashScreen
 import com.example.cinemaxapp.feature.auth.verification.VerificationScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,9 +21,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CinemaxTheme {
-                VerificationScreen {
-                    //TODO
-                }
+                SplashScreen()
             }
         }
     }
