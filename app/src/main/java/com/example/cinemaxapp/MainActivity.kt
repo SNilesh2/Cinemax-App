@@ -20,9 +20,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CinemaxTheme {
-                SplashScreen()
-            }
+            CinemaxApp()
         }
     }
 }
