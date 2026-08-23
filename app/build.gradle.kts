@@ -48,9 +48,13 @@ dependencies {
 
     // Feature modules
     implementation(project(":feature:auth"))
+    implementation(project(":feature:home"))
+
 
     // Core modules
     implementation(project(":core:designsystem"))
+    implementation(project(":core:data"))
+    implementation(project(":core:domain"))
 
 
     implementation(platform(libs.androidx.compose.bom))

@@ -8,13 +8,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import com.example.cinemaxapp.feature.auth.navigation.AuthRoute
 import com.example.cinemaxapp.feature.auth.navigation.authGraph
-
+import com.example.cinemaxapp.feature.home.navigation.HomeRoute
+import com.example.cinemaxapp.feature.home.navigation.homeScreen
 
 @Composable
 fun CinemaxNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = AuthRoute.ROOT,
+    startDestination: String = HomeRoute.ROUTE,
 ) {
     NavHost(
         navController = navController,
@@ -22,5 +23,14 @@ fun CinemaxNavHost(
         modifier = modifier,
     ) {
         authGraph(navController = navController)
+
+        homeScreen(
+            onMovieClick = { movieId ->
+                // Navigate to Movie Details in future feature
+            },
+            onSeeAllClick = {
+                // Navigate to See All Movies in future feature
+            },
+        )
     }
 }

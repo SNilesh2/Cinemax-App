@@ -26,12 +26,13 @@ rootProject.name = "Cinemax App"
 include(":app")
 // Feature modules
 include(":feature:auth")
+include(":feature:home")
 
 // Core modules
 include(":core:designsystem")
-// include(":core:ui")
-// include(":core:domain")
-// include(":core:data")
-// include(":core:model")
-// include(":core:common")
+include(":core:ui")
+include(":core:domain")
+include(":core:data")
+include(":core:model")
+include(":core:common")
 

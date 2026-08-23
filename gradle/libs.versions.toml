@@ -12,8 +12,12 @@ hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
 navigationCompose = "2.8.4"
 ksp = "2.0.21-1.0.27"
+coil = "2.7.0"
 
 [libraries]
+# Coil Image Loading
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
 #Androidx core
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 

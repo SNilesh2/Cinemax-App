@@ -14,6 +14,7 @@ import com.example.cinemaxapp.feature.auth.splash.SplashScreen
 import com.example.cinemaxapp.feature.auth.verification.VerificationScreen
 import dagger.hilt.android.AndroidEntryPoint
 
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

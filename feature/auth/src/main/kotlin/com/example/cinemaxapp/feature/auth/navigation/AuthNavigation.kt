@@ -13,9 +13,7 @@ import com.example.cinemaxapp.feature.auth.resetpassword.ResetPasswordScreen
 import com.example.cinemaxapp.feature.auth.signup.SignUpScreen
 import com.example.cinemaxapp.feature.auth.verification.VerificationScreen
 
-/**
- * Type-safe Auth Route destinations for the feature:auth module.
- */
+
 object AuthRoute {
     const val ROOT = "auth_graph"
     const val LOGIN_SIGNUP = "login_signup"
