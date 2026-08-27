@@ -32,6 +32,11 @@ dependencies {
     implementation(project(":core:common"))
     implementation(libs.core.ktx)
 
+    //Network and Retrofit
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging)
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

@@ -1,17 +1,24 @@
 package com.example.cinemaxapp.core.data.repository
 
+import android.util.Log
+import com.example.cinemaxapp.core.data.network.api.TmdbApiService
 import com.example.cinemaxapp.core.domain.repository.MovieRepository
 import com.example.cinemaxapp.core.model.FeaturedBanner
-import com.example.cinemaxapp.core.model.HomeFeed
 import com.example.cinemaxapp.core.model.Movie
 import com.example.cinemaxapp.core.model.MovieCategory
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.toString
+
 
 @Singleton
-class MovieRepositoryImpl @Inject constructor() : MovieRepository {
+class MovieRepositoryImpl @Inject constructor(
+    private val tmdbApiService: TmdbApiService,
+) : MovieRepository {
+
+    // ─── Fallback sample data (used when TMDB returns empty or is unreachable) ───
 
     private val sampleBanners = listOf(
         FeaturedBanner(
@@ -32,16 +39,6 @@ class MovieRepositoryImpl @Inject constructor() : MovieRepository {
             releaseDateText = "On March 4, 2022",
             bannerImageUrl = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&auto=format&fit=crop&q=80",
         ),
-    )
-
-    private val sampleCategories = listOf(
-        MovieCategory("c1","All"),
-        MovieCategory("c2", "Comedy"),
-        MovieCategory("c3", "Animation"),
-        MovieCategory("c4", "Documentary"),
-        MovieCategory("c5", "Action"),
-        MovieCategory("c6", "Drama"),
-        MovieCategory("c7", "Sci-Fi"),
     )
 
     private val samplePopularMovies = listOf(
@@ -75,19 +72,133 @@ class MovieRepositoryImpl @Inject constructor() : MovieRepository {
         ),
     )
 
-    override fun getHomeFeed(): Flow<HomeFeed> = flow {
-        emit(
-            HomeFeed(
-                userName = "Smith",
-                userAvatarUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&auto=format&fit=crop&q=80",
-                featuredBanners = sampleBanners,
-                categories = sampleCategories,
-                popularMovies = samplePopularMovies,
+    // ─── Repository Methods ───────────────────────────────────────────────────────
+
+    override suspend fun getFeaturedBanners(): List<FeaturedBanner> = withContext(Dispatchers.IO) {
+        Log.d("MovieRepositoryImpl", "getFeaturedBanners: calling TMDB Now Playing API...")
+
+        val apiMovies = tmdbApiService.getNowPlayingMovies().results
+
+        if (!apiMovies.isNullOrEmpty()) {
+            Log.d("MovieRepositoryImpl", "getFeaturedBanners: TMDB returned ${apiMovies.size} movies")
+            apiMovies.map { dto ->
+                // Prefer backdrop (wide image) for the carousel banner.
+                // Fall back to poster if no backdrop is available.
+                val imageUrl = when {
+                    !dto.backdropPath.isNullOrBlank() ->
+                        TmdbApiService.IMAGE_BASE_URL_W780 + dto.backdropPath
+                    !dto.posterPath.isNullOrBlank() ->
+                        TmdbApiService.IMAGE_BASE_URL_W500 + dto.posterPath
+                    else ->
+                        "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80"
+                }
+                FeaturedBanner(
+                    id = dto.id.toString(),
+                    title = dto.title,
+                    releaseDateText = formatReleaseDateText(dto.releaseDate),
+                    bannerImageUrl = imageUrl,
+                )
+            }
+        } else {
+            Log.w("MovieRepositoryImpl", "getFeaturedBanners: TMDB returned empty, using sample data")
+            sampleBanners
+        }
+    }
+
+
+    override suspend fun getMovieCategories(): List<MovieCategory> = withContext(Dispatchers.IO) {
+        Log.d("MovieRepositoryImpl", "getMovieCategories: calling TMDB Genre API...")
+
+        val genres = tmdbApiService.getMovieGenres().genres
+
+        if (!genres.isNullOrEmpty()) {
+            Log.d("MovieRepositoryImpl", "getMovieCategories: TMDB returned ${genres.size} genres")
+
+            // Prepend the "All" category, then append all TMDB genres.
+            // "All" is a UI filter — it is not sent to TMDB as a real genre.
+            //val allCategory = MovieCategory(id = "0", name = "All")
+            val tmdbCategories = genres.map { dto ->
+                MovieCategory(
+                    id = dto.id.toString(),   // TMDB genre id (Int) → String for MovieCategory
+                    name = dto.name,
+                )
+            }
+
+            //listOf(allCategory) +
+            tmdbCategories
+        } else {
+            Log.w("MovieRepositoryImpl", "getMovieCategories: TMDB returned empty, using fallback")
+            // Fallback: a minimal list so the UI doesn't break if the genre API fails.
+            listOf(
+                MovieCategory("0",  "All"),
+                MovieCategory("28", "Action"),
+                MovieCategory("35", "Comedy"),
+                MovieCategory("16", "Animation"),
+                MovieCategory("99", "Documentary"),
+                MovieCategory("18", "Drama"),
+                MovieCategory("878", "Science Fiction"),
             )
-        )
+        }
+    }
+
+
+
+
+    override suspend fun getPopularMovies(): List<Movie> = withContext(Dispatchers.IO) {
+        Log.d("MovieRepositoryImpl", "getPopularMovies: calling TMDB Now Playing API...")
+
+        val apiMovies = tmdbApiService.getNowPlayingMovies().results
+
+        if (!apiMovies.isNullOrEmpty()) {
+            Log.d("MovieRepositoryImpl", "getPopularMovies: TMDB returned ${apiMovies.size} movies")
+            apiMovies.map { dto ->
+                val posterUrl = when {
+                    !dto.posterPath.isNullOrBlank() ->
+                        TmdbApiService.IMAGE_BASE_URL_W500 + dto.posterPath
+                    else ->
+                        "https://images.unsplash.com/photo-1635805737707-575885ab0820?w=600&auto=format&fit=crop&q=80"
+                }
+                Movie(
+                    id = dto.id.toString(),
+                    title = dto.title,
+                    posterUrl = posterUrl,
+                    rating = dto.voteAverage ?: 4.5,
+                    category = "Action",
+                    releaseDate = dto.releaseDate ?: "",
+                )
+            }
+        } else {
+            Log.w("MovieRepositoryImpl", "getPopularMovies: TMDB returned empty, using sample data")
+            samplePopularMovies
+        }
     }
 
     override suspend fun toggleWishlist(movieId: String): Boolean {
         return true
     }
+
+    // ─── Private Helpers ──────────────────────────────────────────────────────────
+    private fun formatReleaseDateText(rawDate: String?): String {
+        if (rawDate.isNullOrBlank()) return "On March 2, 2022"
+        return try {
+            val parts = rawDate.split("-")
+            if (parts.size == 3) {
+                val year = parts[0]
+                val month = when (parts[1]) {
+                    "01" -> "January"; "02" -> "February"; "03" -> "March"
+                    "04" -> "April";   "05" -> "May";      "06" -> "June"
+                    "07" -> "July";    "08" -> "August";   "09" -> "September"
+                    "10" -> "October"; "11" -> "November"; "12" -> "December"
+                    else -> "March"
+                }
+                val day = parts[2].toIntOrNull() ?: 1
+                "On $month $day, $year"
+            } else {
+                "On $rawDate"
+            }
+        } catch (e: Exception) {
+            "On $rawDate"
+        }
+    }
 }
+

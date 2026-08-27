@@ -1,10 +1,12 @@
 package com.example.cinemaxapp.core.data.repository;
 
+import com.example.cinemaxapp.core.data.network.api.TmdbApiService;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
 import dagger.internal.ScopeMetadata;
 import javax.annotation.processing.Generated;
+import javax.inject.Provider;
 
 @ScopeMetadata("javax.inject.Singleton")
 @QualifierMetadata
@@ -22,20 +24,23 @@ import javax.annotation.processing.Generated;
     "deprecation"
 })
 public final class MovieRepositoryImpl_Factory implements Factory<MovieRepositoryImpl> {
+  private final Provider<TmdbApiService> tmdbApiServiceProvider;
+
+  public MovieRepositoryImpl_Factory(Provider<TmdbApiService> tmdbApiServiceProvider) {
+    this.tmdbApiServiceProvider = tmdbApiServiceProvider;
+  }
+
   @Override
   public MovieRepositoryImpl get() {
-    return newInstance();
+    return newInstance(tmdbApiServiceProvider.get());
   }
 
-  public static MovieRepositoryImpl_Factory create() {
-    return InstanceHolder.INSTANCE;
+  public static MovieRepositoryImpl_Factory create(
+      Provider<TmdbApiService> tmdbApiServiceProvider) {
+    return new MovieRepositoryImpl_Factory(tmdbApiServiceProvider);
   }
 
-  public static MovieRepositoryImpl newInstance() {
-    return new MovieRepositoryImpl();
-  }
-
-  private static final class InstanceHolder {
-    private static final MovieRepositoryImpl_Factory INSTANCE = new MovieRepositoryImpl_Factory();
+  public static MovieRepositoryImpl newInstance(TmdbApiService tmdbApiService) {
+    return new MovieRepositoryImpl(tmdbApiService);
   }
 }

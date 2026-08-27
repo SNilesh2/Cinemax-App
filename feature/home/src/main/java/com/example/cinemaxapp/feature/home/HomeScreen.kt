@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,10 +53,8 @@ import coil.compose.AsyncImage
 import com.example.cinemaxapp.core.designsystem.icon.CinemaxIcons
 import com.example.cinemaxapp.core.designsystem.theme.CinemaxTheme
 import com.example.cinemaxapp.core.model.FeaturedBanner
-import com.example.cinemaxapp.core.model.HomeFeed
 import com.example.cinemaxapp.core.model.Movie
 import com.example.cinemaxapp.core.model.MovieCategory
-import androidx.compose.ui.text.input.ImeAction
 
 @Composable
 fun HomeScreen(
@@ -111,8 +110,6 @@ fun HomeScreenContent(
                 )
             }
             is HomeUiState.Success -> {
-                val feed = uiState.homeFeed
-
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -123,45 +120,44 @@ fun HomeScreenContent(
 
                     // 1. Header Section
                     HomeHeader(
-                        userName = feed.userName,
-                        avatarUrl = feed.userAvatarUrl,
+                        userName = uiState.userName,
+                        avatarUrl = uiState.userAvatarUrl,
                         onWishlistClick = {},
                     )
 
-                    Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     // 2. Search Bar Section
                     HomeSearchBar(
                         query = uiState.searchQuery,
                         onQueryChange = onSearchQueryChange,
-                        onSearchAction = { /* Handle search action if needed */ },
                         onFilterClick = {},
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     // 3. Featured Movie Carousel & Indicators
-                    if (feed.featuredBanners.isNotEmpty()) {
+                    if (uiState.featuredBanners.isNotEmpty()) {
                         FeaturedCarouselSection(
-                            banners = feed.featuredBanners,
+                            banners = uiState.featuredBanners,
                             onBannerClick = { onMovieClick(it.id) },
                         )
                     }
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // 5. Categories Section
+                    // 4. Categories Section
                     CategoriesSection(
-                        categories = feed.categories,
+                        categories = uiState.categories,
                         selectedCategoryId = uiState.selectedCategoryId,
                         onCategorySelect = onCategorySelect,
                     )
 
                     Spacer(modifier = Modifier.height(28.dp))
 
-                    // 6 & 7. Most Popular Section & Movie Cards
+                    // 5. Most Popular Section & Movie Cards
                     MostPopularSection(
-                        movies = feed.popularMovies,
+                        movies = uiState.popularMovies,
                         onSeeAllClick = onSeeAllClick,
                         onMovieClick = { onMovieClick(it.id) },
                     )
@@ -199,7 +195,7 @@ private fun HomeHeader(
             // Circular User Profile Image
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(CinemaxTheme.colors.soft),
                 contentAlignment = Alignment.Center,
@@ -221,7 +217,7 @@ private fun HomeHeader(
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column {
                 Text(
@@ -229,7 +225,7 @@ private fun HomeHeader(
                     style = CinemaxTheme.typography.h4SemiBold,
                     color = CinemaxTheme.colors.white,
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Let's stream your favorite movie",
                     style = CinemaxTheme.typography.h6Medium,
@@ -242,7 +238,7 @@ private fun HomeHeader(
         IconButton(
             onClick = onWishlistClick,
             modifier = Modifier
-                .size(32.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(CinemaxTheme.colors.soft)
         ) {
@@ -271,7 +267,7 @@ private fun HomeSearchBar(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp)
-            .height(41.dp),
+            .height(52.dp),
         shape = RoundedCornerShape(24.dp),
         color = CinemaxTheme.colors.soft,
     ) {
@@ -285,7 +281,7 @@ private fun HomeSearchBar(
                 painter = painterResource(id = CinemaxIcons.Search),
                 contentDescription = "Search",
                 tint = CinemaxTheme.colors.grey,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(20.dp),
             )
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -322,19 +318,19 @@ private fun HomeSearchBar(
 
             HorizontalDivider(
                 modifier = Modifier
-                    .height(16.dp)
+                    .height(20.dp)
                     .width(1.dp),
-                color = CinemaxTheme.colors.darkGrey,
+                color = CinemaxTheme.colors.grey.copy(alpha = 0.3f),
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Icon(
                 painter = painterResource(id = CinemaxIcons.Filter),
                 contentDescription = "Filter",
                 tint = CinemaxTheme.colors.white,
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(20.dp)
                     .clickable { onFilterClick() },
             )
         }
@@ -347,9 +343,24 @@ private fun HomeSearchBar(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+fun FeaturedMovieCarousel(
+    banners: List<FeaturedBanner>,
+    onBannerClick: (FeaturedBanner) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    FeaturedCarouselSection(
+        banners = banners,
+        onBannerClick = onBannerClick,
+        modifier = modifier,
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 private fun FeaturedCarouselSection(
     banners: List<FeaturedBanner>,
     onBannerClick: (FeaturedBanner) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val pagerState = rememberPagerState(pageCount = { banners.size })
 
@@ -357,7 +368,7 @@ private fun FeaturedCarouselSection(
         HorizontalPager(
             state = pagerState,
             contentPadding = PaddingValues(horizontal = 36.dp),
-            pageSpacing = 12.dp,
+            pageSpacing = 16.dp,
             modifier = Modifier.fillMaxWidth()
         ) { page ->
             val banner = banners[page]
@@ -464,7 +475,7 @@ private fun CategoriesSection(
 
         LazyRow(
             contentPadding = PaddingValues(horizontal = 24.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(categories) { category ->
                 val isSelected = category.id == selectedCategoryId
@@ -571,14 +582,14 @@ private fun MoviePosterCard(
                 color = CinemaxTheme.colors.soft.copy(alpha = 0.85f),
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         painter = painterResource(id = CinemaxIcons.Star),
                         contentDescription = "Rating",
                         tint = CinemaxTheme.colors.orange,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
@@ -623,8 +634,9 @@ private fun HomeBottomNavigationBar(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 20.dp)
+            .padding(horizontal = 24.dp, vertical = 20.dp)
             .height(72.dp),
+        shape = RoundedCornerShape(36.dp),
         color = CinemaxTheme.colors.dark,
         tonalElevation = 8.dp,
     ) {
@@ -721,28 +733,26 @@ private fun HomeScreenPreview() {
     CinemaxTheme {
         HomeScreenContent(
             uiState = HomeUiState.Success(
-                homeFeed = HomeFeed(
-                    userName = "Smith",
-                    featuredBanners = listOf(
-                        FeaturedBanner(
-                            id = "b1",
-                            title = "Black Panther: Wakanda\nForever",
-                            releaseDateText = "On March 2, 2022",
-                            bannerImageUrl = "",
-                        )
-                    ),
-                    categories = listOf(
-                        MovieCategory("1", "All"),
-                        MovieCategory("2", "Comedy"),
-                        MovieCategory("3", "Animation"),
-                        MovieCategory("4", "Dokumentary"),
-                    ),
-                    popularMovies = listOf(
-                        Movie("1", "Spider-Man No..", "", 4.5, "Action"),
-                        Movie("2", "Life of PI", "", 4.5, "Action"),
-                        Movie("3", "Riverdale", "", 4.5, "Action"),
-                    ),
-                )
+                userName = "Smith",
+                featuredBanners = listOf(
+                    FeaturedBanner(
+                        id = "b1",
+                        title = "Black Panther: Wakanda\nForever",
+                        releaseDateText = "On March 2, 2022",
+                        bannerImageUrl = "",
+                    )
+                ),
+                categories = listOf(
+                    MovieCategory("1", "All"),
+                    MovieCategory("2", "Comedy"),
+                    MovieCategory("3", "Animation"),
+                    MovieCategory("4", "Documentary"),
+                ),
+                popularMovies = listOf(
+                    Movie("1", "Spider-Man No..", "", 4.5, "Action"),
+                    Movie("2", "Life of PI", "", 4.5, "Action"),
+                    Movie("3", "Riverdale", "", 4.5, "Action"),
+                ),
             )
         )
     }

@@ -1,6 +1,8 @@
 package com.example.cinemaxapp.feature.home;
 
-import com.example.cinemaxapp.core.domain.usecase.GetHomeFeedUseCase;
+import com.example.cinemaxapp.core.domain.usecase.GetFeaturedBannersUseCase;
+import com.example.cinemaxapp.core.domain.usecase.GetMovieCategoriesUseCase;
+import com.example.cinemaxapp.core.domain.usecase.GetPopularMoviesUseCase;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -24,23 +26,36 @@ import javax.inject.Provider;
     "deprecation"
 })
 public final class HomeViewModel_Factory implements Factory<HomeViewModel> {
-  private final Provider<GetHomeFeedUseCase> getHomeFeedUseCaseProvider;
+  private final Provider<GetFeaturedBannersUseCase> getFeaturedBannersUseCaseProvider;
 
-  public HomeViewModel_Factory(Provider<GetHomeFeedUseCase> getHomeFeedUseCaseProvider) {
-    this.getHomeFeedUseCaseProvider = getHomeFeedUseCaseProvider;
+  private final Provider<GetMovieCategoriesUseCase> getMovieCategoriesUseCaseProvider;
+
+  private final Provider<GetPopularMoviesUseCase> getPopularMoviesUseCaseProvider;
+
+  public HomeViewModel_Factory(
+      Provider<GetFeaturedBannersUseCase> getFeaturedBannersUseCaseProvider,
+      Provider<GetMovieCategoriesUseCase> getMovieCategoriesUseCaseProvider,
+      Provider<GetPopularMoviesUseCase> getPopularMoviesUseCaseProvider) {
+    this.getFeaturedBannersUseCaseProvider = getFeaturedBannersUseCaseProvider;
+    this.getMovieCategoriesUseCaseProvider = getMovieCategoriesUseCaseProvider;
+    this.getPopularMoviesUseCaseProvider = getPopularMoviesUseCaseProvider;
   }
 
   @Override
   public HomeViewModel get() {
-    return newInstance(getHomeFeedUseCaseProvider.get());
+    return newInstance(getFeaturedBannersUseCaseProvider.get(), getMovieCategoriesUseCaseProvider.get(), getPopularMoviesUseCaseProvider.get());
   }
 
   public static HomeViewModel_Factory create(
-      Provider<GetHomeFeedUseCase> getHomeFeedUseCaseProvider) {
-    return new HomeViewModel_Factory(getHomeFeedUseCaseProvider);
+      Provider<GetFeaturedBannersUseCase> getFeaturedBannersUseCaseProvider,
+      Provider<GetMovieCategoriesUseCase> getMovieCategoriesUseCaseProvider,
+      Provider<GetPopularMoviesUseCase> getPopularMoviesUseCaseProvider) {
+    return new HomeViewModel_Factory(getFeaturedBannersUseCaseProvider, getMovieCategoriesUseCaseProvider, getPopularMoviesUseCaseProvider);
   }
 
-  public static HomeViewModel newInstance(GetHomeFeedUseCase getHomeFeedUseCase) {
-    return new HomeViewModel(getHomeFeedUseCase);
+  public static HomeViewModel newInstance(GetFeaturedBannersUseCase getFeaturedBannersUseCase,
+      GetMovieCategoriesUseCase getMovieCategoriesUseCase,
+      GetPopularMoviesUseCase getPopularMoviesUseCase) {
+    return new HomeViewModel(getFeaturedBannersUseCase, getMovieCategoriesUseCase, getPopularMoviesUseCase);
   }
 }

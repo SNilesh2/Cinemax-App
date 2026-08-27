@@ -1,13 +1,19 @@
 package com.example.cinemaxapp.core.domain.repository
 
-import com.example.cinemaxapp.core.model.HomeFeed
+import com.example.cinemaxapp.core.model.FeaturedBanner
 import com.example.cinemaxapp.core.model.Movie
-import kotlinx.coroutines.flow.Flow
+import com.example.cinemaxapp.core.model.MovieCategory
 
 /**
  * Domain repository contract for movie data.
  */
 interface MovieRepository {
-    fun getHomeFeed(): Flow<HomeFeed>
+
+    suspend fun getFeaturedBanners(): List<FeaturedBanner>
+
+    suspend fun getMovieCategories(): List<MovieCategory>
+
+    suspend fun getPopularMovies(): List<Movie>
+
     suspend fun toggleWishlist(movieId: String): Boolean
 }
