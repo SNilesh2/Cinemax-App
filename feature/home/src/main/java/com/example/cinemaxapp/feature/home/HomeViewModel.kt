@@ -13,20 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * PRESENTATION LAYER: ViewModel for the HomeScreen.
- *
- * BEFORE refactoring: Had one GetHomeFeedUseCase and used Flow + onEach + launchIn.
- * AFTER refactoring:  Has three focused use cases and uses viewModelScope.launch + async/await.
- *
- * Role of the ViewModel:
- *  1. COORDINATOR — calls the 3 use cases and combines their results into HomeUiState
- *  2. STATE HOLDER — exposes uiState (StateFlow) that the UI observes
- *  3. EVENT HANDLER — handles user interactions (category select, search, tab select)
- *
- * The ViewModel does NOT know about Retrofit, OkHttp, TMDB, or Gson.
- * It only speaks in domain model terms (FeaturedBanner, Movie, MovieCategory).
- */
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getFeaturedBannersUseCase: GetFeaturedBannersUseCase,
@@ -73,10 +60,10 @@ class HomeViewModel @Inject constructor(
                 // Start the two network calls concurrently
                 val bannersDeferred = async { getFeaturedBannersUseCase() }
                 val categoriesDeferred = async { getMovieCategoriesUseCase() }  // now hits TMDB Genre API
-                val moviesDeferred  = async { getPopularMoviesUseCase() }
+                val moviesDeferred  = async { getPopularMoviesUseCase(genreId = "") }
 
                 // Categories are instant (hardcoded) — no async needed
-                val categories = getMovieCategoriesUseCase()
+                val categories = categoriesDeferred.await()
 
                 // .await() suspends until each async block finishes,
                 // then builds the Success state with all three results.
@@ -104,6 +91,29 @@ class HomeViewModel @Inject constructor(
             // copy() creates a new object with only selectedCategoryId changed.
             // All other fields remain the same — no re-fetch needed.
             _uiState.value = current.copy(selectedCategoryId = categoryId)
+
+
+            viewModelScope.launch {
+                try {
+                    val movies = getPopularMoviesUseCase(genreId = categoryId)
+
+                    // Use the very latest state — it may have changed while we were fetching
+                    // (e.g. the user tapped another category). Only update popularMovies.
+                    val latest = _uiState.value
+                    if (latest is HomeUiState.Success) {
+                        _uiState.value = latest.copy(popularMovies = movies)
+                    }
+                } catch (e: Exception) {
+                    // If the genre-specific fetch fails, keep the existing movie list visible.
+                    // We don't flip to HomeUiState.Error here because that would wipe the
+                    // entire screen (banners, categories etc.) just because one genre fetch failed.
+                    // The user can try another category or pull-to-refresh.
+                    android.util.Log.w(
+                        "HomeViewModel",
+                        "Failed to fetch movies for genre $categoryId: ${e.message}"
+                    )
+                }
+            }
         }
     }
 

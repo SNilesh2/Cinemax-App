@@ -116,7 +116,7 @@ class MovieRepositoryImpl @Inject constructor(
 
             // Prepend the "All" category, then append all TMDB genres.
             // "All" is a UI filter — it is not sent to TMDB as a real genre.
-            //val allCategory = MovieCategory(id = "0", name = "All")
+            val allCategory = MovieCategory(id = "0", name = "All")
             val tmdbCategories = genres.map { dto ->
                 MovieCategory(
                     id = dto.id.toString(),   // TMDB genre id (Int) → String for MovieCategory
@@ -124,8 +124,7 @@ class MovieRepositoryImpl @Inject constructor(
                 )
             }
 
-            //listOf(allCategory) +
-            tmdbCategories
+            listOf(allCategory) + tmdbCategories
         } else {
             Log.w("MovieRepositoryImpl", "getMovieCategories: TMDB returned empty, using fallback")
             // Fallback: a minimal list so the UI doesn't break if the genre API fails.
@@ -144,13 +143,19 @@ class MovieRepositoryImpl @Inject constructor(
 
 
 
-    override suspend fun getPopularMovies(): List<Movie> = withContext(Dispatchers.IO) {
-        Log.d("MovieRepositoryImpl", "getPopularMovies: calling TMDB Now Playing API...")
+    override suspend fun getPopularMovies(genreId: String): List<Movie> = withContext(Dispatchers.IO) {
+        val isAllGenres = genreId.isBlank() || genreId == "0"
 
-        val apiMovies = tmdbApiService.getNowPlayingMovies().results
+        val apiMovies = if (isAllGenres) {
+            Log.d("MovieRepositoryImpl", "getPopularMovies: fetching Now Playing (all genres)")
+            tmdbApiService.getNowPlayingMovies().results
+        } else {
+            Log.d("MovieRepositoryImpl", "getPopularMovies: fetching Discover for genre ID=$genreId")
+            tmdbApiService.discoverMovies(withGenres = genreId).results
+        }
 
         if (!apiMovies.isNullOrEmpty()) {
-            Log.d("MovieRepositoryImpl", "getPopularMovies: TMDB returned ${apiMovies.size} movies")
+            Log.d("MovieRepositoryImpl", "getPopularMovies: received ${apiMovies.size} movies")
             apiMovies.map { dto ->
                 val posterUrl = when {
                     !dto.posterPath.isNullOrBlank() ->

@@ -13,7 +13,7 @@ interface MovieRepository {
 
     suspend fun getMovieCategories(): List<MovieCategory>
 
-    suspend fun getPopularMovies(): List<Movie>
+    suspend fun getPopularMovies(genreId: String = ""): List<Movie>
 
     suspend fun toggleWishlist(movieId: String): Boolean
 }

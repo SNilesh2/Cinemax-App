@@ -5,15 +5,10 @@ import com.example.cinemaxapp.core.data.network.model.TmdbNowPlayingResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-/**
- * Retrofit interface for TMDB API endpoints.
- */
+
 interface TmdbApiService {
 
-    /**
-     * Fetches movies currently in theaters (Featured Movie Carousel source).
-     * Endpoint: GET 3/movie/now_playing
-     */
+
     @GET("movie/now_playing")
     suspend fun getNowPlayingMovies(
         @Query("page") page: Int = 1,
@@ -21,10 +16,20 @@ interface TmdbApiService {
     ): TmdbNowPlayingResponseDto
 
 
+
     @GET("genre/movie/list")
     suspend fun getMovieGenres(
         @Query("language") language: String = "en-US",
     ): TmdbGenreResponseDto
+
+
+    @GET("discover/movie")
+    suspend fun discoverMovies(
+        @Query("with_genres") withGenres: String,
+        @Query("sort_by")     sortBy: String = "popularity.desc",
+        @Query("language")    language: String = "en-US",
+        @Query("page")        page: Int = 1,
+    ): TmdbNowPlayingResponseDto
 
     companion object {
         const val BASE_URL = "https://api.themoviedb.org/3/"
