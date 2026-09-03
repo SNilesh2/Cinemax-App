@@ -1,15 +1,23 @@
 package com.example.cinemaxapp.feature.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.cinemaxapp.core.domain.repository.MovieRepository
 import com.example.cinemaxapp.core.domain.usecase.GetFeaturedBannersUseCase
 import com.example.cinemaxapp.core.domain.usecase.GetMovieCategoriesUseCase
 import com.example.cinemaxapp.core.domain.usecase.GetPopularMoviesUseCase
+import com.example.cinemaxapp.core.domain.usecase.SyncGenresUseCase
+import com.example.cinemaxapp.core.domain.usecase.SyncMoviesForGenreUseCase
+import com.example.cinemaxapp.core.domain.usecase.SyncNowPlayingMoviesUseCase
+import com.example.cinemaxapp.core.model.MovieCategory
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,100 +27,149 @@ class HomeViewModel @Inject constructor(
     private val getFeaturedBannersUseCase: GetFeaturedBannersUseCase,
     private val getMovieCategoriesUseCase: GetMovieCategoriesUseCase,
     private val getPopularMoviesUseCase: GetPopularMoviesUseCase,
+    private val syncNowPlayingMoviesUseCase: SyncNowPlayingMoviesUseCase,
+    private val syncGenresUseCase: SyncGenresUseCase,
+    private val syncMoviesForGenreUseCase: SyncMoviesForGenreUseCase,
 ) : ViewModel() {
 
     // The single source of truth for the HomeScreen's visual state.
-    // MutableStateFlow: can be written to (only inside this ViewModel)
-    // StateFlow: read-only view exposed to the UI
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     private val _selectedTab = MutableStateFlow(HomeBottomTab.HOME)
     val selectedTab: StateFlow<HomeBottomTab> = _selectedTab.asStateFlow()
 
-    // `init` runs automatically when Hilt creates the ViewModel (when HomeScreen appears).
+
+    private var currentGenreId: String = "0"
+
     init {
-        loadHomeData()
+        observeFeaturedBanners()
+        observeCategories()
+        observeMoviesForGenre("0")   // "0" = "All" on initial load
+
+        // Start background sync immediately — fetch fresh data from TMDB and save to Room.
+        // When each sync completes, the Flows above automatically re-emit with fresh data.
+        triggerInitialSync()
     }
 
-    /**
-     * Loads all HomeScreen data by invoking the three use cases.
-     *
-     * CONCURRENCY STRATEGY — why async/await instead of sequential calls:
-     *
-     *   Sequential (slower):
-     *     val banners    = getFeaturedBannersUseCase()   // waits ~500ms
-     *     val movies     = getPopularMoviesUseCase()     // waits another ~500ms
-     *     Total: ~1000ms
-     *
-     *   Concurrent with async (faster):
-     *     val bannersJob = async { getFeaturedBannersUseCase() }  // starts immediately
-     *     val moviesJob  = async { getPopularMoviesUseCase() }    // starts immediately
-     *     bannersJob.await() + moviesJob.await()                  // waits for both
-     *     Total: ~500ms (both run at the same time)
-     *
-     * getMovieCategories() is not async because it's instant (no network call).
-     */
-    fun loadHomeData() {
-        _uiState.value = HomeUiState.Loading
-        viewModelScope.launch {
-            try {
-                // Start the two network calls concurrently
-                val bannersDeferred = async { getFeaturedBannersUseCase() }
-                val categoriesDeferred = async { getMovieCategoriesUseCase() }  // now hits TMDB Genre API
-                val moviesDeferred  = async { getPopularMoviesUseCase(genreId = "") }
+    // ═══════════════════════════════════════════════════════════
+    // FLOW OBSERVATION — Read from Room database (source of truth)
+    // ═══════════════════════════════════════════════════════════
 
-                // Categories are instant (hardcoded) — no async needed
-                val categories = categoriesDeferred.await()
 
-                // .await() suspends until each async block finishes,
-                // then builds the Success state with all three results.
-                _uiState.value = HomeUiState.Success(
-                    featuredBanners    = bannersDeferred.await(),
-                    categories         = categories,
-                    popularMovies      = moviesDeferred.await(),
-                    selectedCategoryId = categories.firstOrNull()?.id ?: "",
-                )
-            } catch (e: Exception) {
-                // If either async block throws (e.g., SocketTimeoutException),
-                // the catch block here handles it and shows the error state.
-                _uiState.value = HomeUiState.Error(
-                    message = e.message ?: "An unexpected error occurred"
-                )
+    private fun observeFeaturedBanners() {
+        getFeaturedBannersUseCase()
+            .onEach { banners ->
+                _uiState.update { current ->
+                    when (current) {
+                        is HomeUiState.Loading ->
+                            // First emission: create the Success state with banners
+                            HomeUiState.Success(featuredBanners = banners)
+                        is HomeUiState.Success ->
+                            // Subsequent emissions: update just the banners field
+                            current.copy(featuredBanners = banners)
+                        is HomeUiState.Error ->
+                            // Recovery: if we previously showed an error, now show data
+                            HomeUiState.Success(featuredBanners = banners)
+                    }
+                }
             }
+            .launchIn(viewModelScope)   // Runs until ViewModel is destroyed
+    }
+
+
+    private fun observeCategories() {
+        getMovieCategoriesUseCase()
+            .onEach { categories ->
+                _uiState.update { current ->
+                    val isFirstTime = current !is HomeUiState.Success
+                    val currentSelected = (current as? HomeUiState.Success)?.selectedCategoryId ?: ""
+
+                    when (current) {
+                        is HomeUiState.Loading ->
+                            HomeUiState.Success(
+                                categories = categories,
+                                // Auto-select "All" (first category) on first load
+                                selectedCategoryId = categories.firstOrNull()?.id ?: "",
+                            )
+                        is HomeUiState.Success ->
+                            current.copy(
+                                categories = categories,
+                                // Keep existing selection, unless it's gone from the new list
+                                selectedCategoryId = if (currentSelected.isEmpty() && isFirstTime)
+                                    categories.firstOrNull()?.id ?: "" else currentSelected,
+                            )
+                        is HomeUiState.Error ->
+                            HomeUiState.Success(
+                                categories = categories,
+                                selectedCategoryId = categories.firstOrNull()?.id ?: "",
+                            )
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+
+    private var moviesJob: kotlinx.coroutines.Job? = null
+
+    private fun observeMoviesForGenre(genreId: String) {
+        moviesJob?.cancel()  // Stop observing the previous genre
+        moviesJob = getPopularMoviesUseCase(genreId = genreId)
+            .onEach { movies ->
+                _uiState.update { current ->
+                    when (current) {
+                        is HomeUiState.Loading ->
+                            HomeUiState.Success(popularMovies = movies)
+                        is HomeUiState.Success ->
+                            current.copy(popularMovies = movies)
+                        is HomeUiState.Error ->
+                            HomeUiState.Success(popularMovies = movies)
+                    }
+                }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // BACKGROUND SYNC — Fetch from TMDB, save to Room
+    // These never affect the UI directly — they write to Room,
+    // which triggers Flow re-emissions, which update the UI.
+    // ═══════════════════════════════════════════════════════════
+
+
+    private fun triggerInitialSync() {
+        viewModelScope.launch {
+            // These can run sequentially — genres must be loaded before we know valid genre IDs
+            syncNowPlayingMoviesUseCase()
+            syncGenresUseCase()
+            Log.d("HomeViewModel", "Initial sync complete")
         }
     }
 
-    // ─── User Interaction Handlers ────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    // USER INTERACTION HANDLERS
+    // ═══════════════════════════════════════════════════════════
+
 
     fun onCategorySelected(categoryId: String) {
+        if (categoryId == currentGenreId) return  // No-op if already selected
+        currentGenreId = categoryId
+
+        // STEP 1: Highlight the chip immediately
         val current = _uiState.value
         if (current is HomeUiState.Success) {
-            // copy() creates a new object with only selectedCategoryId changed.
-            // All other fields remain the same — no re-fetch needed.
             _uiState.value = current.copy(selectedCategoryId = categoryId)
+        }
 
+        // STEP 2a: Switch the movies Flow to the new genre
+        observeMoviesForGenre(categoryId)
 
+        // STEP 2b: Trigger a background sync for this genre's movies
+        // Skip for "All" (genreId="0") — already synced in triggerInitialSync
+        if (categoryId != "0") {
             viewModelScope.launch {
-                try {
-                    val movies = getPopularMoviesUseCase(genreId = categoryId)
-
-                    // Use the very latest state — it may have changed while we were fetching
-                    // (e.g. the user tapped another category). Only update popularMovies.
-                    val latest = _uiState.value
-                    if (latest is HomeUiState.Success) {
-                        _uiState.value = latest.copy(popularMovies = movies)
-                    }
-                } catch (e: Exception) {
-                    // If the genre-specific fetch fails, keep the existing movie list visible.
-                    // We don't flip to HomeUiState.Error here because that would wipe the
-                    // entire screen (banners, categories etc.) just because one genre fetch failed.
-                    // The user can try another category or pull-to-refresh.
-                    android.util.Log.w(
-                        "HomeViewModel",
-                        "Failed to fetch movies for genre $categoryId: ${e.message}"
-                    )
-                }
+                syncMoviesForGenreUseCase(categoryId)
             }
         }
     }

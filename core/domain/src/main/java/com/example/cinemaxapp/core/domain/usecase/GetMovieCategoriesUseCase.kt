@@ -2,6 +2,7 @@ package com.example.cinemaxapp.core.domain.usecase
 
 import com.example.cinemaxapp.core.domain.repository.MovieRepository
 import com.example.cinemaxapp.core.model.MovieCategory
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 /**
@@ -19,7 +20,7 @@ import javax.inject.Inject
 class GetMovieCategoriesUseCase @Inject constructor(
     private val movieRepository: MovieRepository,
 ) {
-    suspend operator fun invoke(): List<MovieCategory> {
+    operator fun invoke(): Flow<List<MovieCategory>> {
         return movieRepository.getMovieCategories()
     }
 }
