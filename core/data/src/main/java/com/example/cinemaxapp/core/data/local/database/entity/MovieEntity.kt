@@ -29,5 +29,19 @@ data class MovieEntity(
 
     @ColumnInfo(name = "vote_average")
     val voteAverage: Double?,
+
+    //Details for Movie Details screen
+    @ColumnInfo(name = "overview", defaultValue = "")
+    val overview: String? = null,
+
+    @ColumnInfo(name = "runtime", defaultValue = "0")
+    val runtime: Int? = null,
+
+
+    @ColumnInfo(name = "tagline", defaultValue = "")
+    val tagline: String? = null,
+
+    @ColumnInfo(name = "homepage", defaultValue = "")
+    val homepage: String? = null,
 )
 

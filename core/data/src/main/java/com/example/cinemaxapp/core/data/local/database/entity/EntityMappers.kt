@@ -2,11 +2,19 @@ package com.example.cinemaxapp.core.data.local.database.entity
 
 
 import com.example.cinemaxapp.core.data.network.api.TmdbApiService
+import com.example.cinemaxapp.core.data.network.model.TmdbCastMemberDto
+import com.example.cinemaxapp.core.data.network.model.TmdbCrewMemberDto
 import com.example.cinemaxapp.core.data.network.model.TmdbGenreDto
+import com.example.cinemaxapp.core.data.network.model.TmdbMovieDetailsDto
 import com.example.cinemaxapp.core.data.network.model.TmdbMovieDto
+import com.example.cinemaxapp.core.model.CreditPerson
 import com.example.cinemaxapp.core.model.FeaturedBanner
 import com.example.cinemaxapp.core.model.Movie
 import com.example.cinemaxapp.core.model.MovieCategory
+import com.example.cinemaxapp.core.model.MovieDetails
+import kotlin.collections.mapNotNull
+import kotlin.text.get
+import kotlin.toString
 
 // DTO → Entity Mappers   (Network layer → Database layer)
 // Called by MovieRepositoryImpl after a successful TMDB API response.
@@ -115,4 +123,172 @@ private fun formatReleaseDateText(rawDate: String?): String {
     } catch (e: Exception) {
         rawDate
     }
+}
+
+
+// MOVIE DETAILS MAPPERS — added for the Movie Details feature
+
+val RELEVANT_CREW_JOBS = setOf(
+    "Director",
+    "Screenplay",
+    "Writer",
+    "Director of Photography",
+    "Original Music Composer",
+    "Producer",
+)
+
+
+// DTO → Entity Mappers for Movie Details
+
+
+fun TmdbMovieDetailsDto.toMovieEntity(): MovieEntity {
+    return MovieEntity(
+        id           = this.id,
+        title        = this.title,
+        backdropPath = this.backdropPath,
+        posterPath   = this.posterPath,
+        releaseDate  = this.releaseDate,
+        voteAverage  = this.voteAverage,
+        overview     = this.overview,
+        runtime      = this.runtime,
+        tagline      = this.tagline,
+        homepage     = this.homepage,
+    )
+}
+
+
+fun TmdbCastMemberDto.toCreditEntity(): CreditEntity {
+    return CreditEntity(
+        personId    = this.id,
+        name        = this.name,
+        profilePath = this.profilePath,
+    )
+}
+
+
+fun TmdbCrewMemberDto.toCreditEntity(): CreditEntity {
+    return CreditEntity(
+        personId    = this.id,
+        name        = this.name,
+        profilePath = this.profilePath,
+    )
+}
+
+
+fun TmdbCastMemberDto.toMovieCreditRef(movieId: Int): MovieCreditRef {
+    return MovieCreditRef(
+        creditId   = this.creditId,
+        movieId    = movieId,
+        personId   = this.id,
+        creditType = "cast",
+        character  = this.character,
+        job        = null,
+        department = null,
+        castOrder  = this.order,
+    )
+}
+
+
+fun TmdbCrewMemberDto.toMovieCreditRef(movieId: Int): MovieCreditRef {
+    return MovieCreditRef(
+        creditId   = this.creditId,
+        movieId    = movieId,
+        personId   = this.id,
+        creditType = "crew",
+        character  = null,
+        job        = this.job,
+        department = this.department,
+        castOrder  = 0,
+    )
+}
+
+
+// Entity → Domain Model Mappers for Movie Details
+
+
+fun CreditEntity.toCreditPerson(ref: MovieCreditRef): CreditPerson {
+    val profileUrl = when {
+        !this.profilePath.isNullOrBlank() ->
+            TmdbApiService.IMAGE_BASE_URL_W185 + this.profilePath
+        else -> ""
+    }
+    val role = when (ref.creditType) {
+        "cast" -> ref.character?.takeIf { it.isNotBlank() } ?: this.name
+        else   -> ref.job?.takeIf { it.isNotBlank() }
+            ?: ref.department?.takeIf { it.isNotBlank() }
+            ?: ""
+    }
+    return CreditPerson(
+        id         = this.personId.toString(),
+        name       = this.name,
+        role       = role,
+        profileUrl = profileUrl,
+    )
+}
+
+
+fun MovieWithCredits.toMovieDetails(creditRefs: List<MovieCreditRef>): MovieDetails {
+    val movie = this.movie
+
+    // Build a lookup map: personId → MovieCreditRef for fast joining
+    val refByCreditId = creditRefs.associateBy { it.creditId }
+
+    // Build a lookup for person entities: personId → CreditEntity
+    val personById = this.credits.associateBy { it.personId }
+
+    // Cast: all cast refs, sorted by castOrder ascending
+    val cast = creditRefs
+        .filter { it.creditType == "cast" }
+        .sortedBy { it.castOrder }
+        .mapNotNull { ref ->
+            personById[ref.personId]?.toCreditPerson(ref)
+        }
+
+    // Crew: only relevant jobs, in order returned by TMDB
+    val crew = creditRefs
+        .filter { it.creditType == "crew" && it.job in RELEVANT_CREW_JOBS }
+        .mapNotNull { ref ->
+            personById[ref.personId]?.toCreditPerson(ref)
+        }
+
+    // Image URLs
+    val posterUrl = when {
+        !movie.posterPath.isNullOrBlank() ->
+            TmdbApiService.IMAGE_BASE_URL_W500 + movie.posterPath
+        else -> ""
+    }
+    val backdropUrl = when {
+        !movie.backdropPath.isNullOrBlank() ->
+            TmdbApiService.IMAGE_BASE_URL_W780 + movie.backdropPath
+        !movie.posterPath.isNullOrBlank() ->
+            TmdbApiService.IMAGE_BASE_URL_W500 + movie.posterPath
+        else -> ""
+    }
+
+    // Release year — extract just the year from "2021-12-15"
+    val releaseYear = movie.releaseDate?.take(4) ?: ""
+
+    // Runtime — format as "148 Minutes" or "—" if unknown
+    val runtimeStr = movie.runtime?.let { min ->
+        if (min > 0) "$min Minutes" else "—"
+    } ?: "—"
+
+    // Rating — vote_average is on a 0–10 scale; round to 1 decimal for display
+    val rating = movie.voteAverage ?: 0.0
+
+    return MovieDetails(
+        id          = movie.id.toString(),
+        title       = movie.title,
+        tagline     = movie.tagline.orEmpty(),
+        posterUrl   = posterUrl,
+        backdropUrl = backdropUrl,
+        releaseYear = releaseYear,
+        runtime     = runtimeStr,
+        genres      = emptyList(), // genres are joined separately; see MovieRepositoryImpl
+        rating      = rating,
+        overview    = movie.overview.orEmpty(),
+        homepage    = movie.homepage.orEmpty(),
+        cast        = cast,
+        crew        = crew,
+    )
 }

@@ -27,6 +27,7 @@ include(":app")
 // Feature modules
 include(":feature:auth")
 include(":feature:home")
+include("feature:movie_details")
 
 // Core modules
 include(":core:designsystem")
@@ -36,3 +37,4 @@ include(":core:data")
 include(":core:model")
 include(":core:common")
 
+include(":feature:movie_details")

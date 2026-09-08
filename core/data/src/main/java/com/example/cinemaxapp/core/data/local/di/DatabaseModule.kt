@@ -3,6 +3,7 @@ package com.example.cinemaxapp.core.data.local.di
 import android.content.Context
 import androidx.room.Room
 import com.example.cinemaxapp.core.data.local.database.CinemaxDatabase
+import com.example.cinemaxapp.core.data.local.database.dao.CreditDao
 import com.example.cinemaxapp.core.data.local.database.dao.GenreDao
 import com.example.cinemaxapp.core.data.local.database.dao.MovieDao
 import dagger.Module
@@ -43,5 +44,11 @@ object DatabaseModule {
     @Singleton
     fun provideGenreDao(database: CinemaxDatabase): GenreDao {
         return database.genreDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideCreditDao(database: CinemaxDatabase): CreditDao {
+        return database.creditDao()
     }
 }
