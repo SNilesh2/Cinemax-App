@@ -1,13 +1,19 @@
 package com.example.cinemaxapp.core.data.repository
 
 import android.util.Log
+import com.example.cinemaxapp.core.data.local.database.dao.CreditDao
 import com.example.cinemaxapp.core.data.local.database.dao.GenreDao
 import com.example.cinemaxapp.core.data.local.database.dao.MovieDao
+import com.example.cinemaxapp.core.data.local.database.entity.MovieGenreCrossRef
+import com.example.cinemaxapp.core.data.local.database.entity.RELEVANT_CREW_JOBS
+import com.example.cinemaxapp.core.data.local.database.entity.toCreditEntity
 import com.example.cinemaxapp.core.data.local.database.entity.toCrossRef
 import com.example.cinemaxapp.core.data.local.database.entity.toFeaturedBanner
 import com.example.cinemaxapp.core.data.local.database.entity.toGenreEntity
 import com.example.cinemaxapp.core.data.local.database.entity.toMovie
 import com.example.cinemaxapp.core.data.local.database.entity.toMovieCategory
+import com.example.cinemaxapp.core.data.local.database.entity.toMovieCreditRef
+import com.example.cinemaxapp.core.data.local.database.entity.toMovieDetails
 import com.example.cinemaxapp.core.data.local.database.entity.toMovieEntity
 import com.example.cinemaxapp.core.data.local.database.entity.toNowPlayingRef
 import com.example.cinemaxapp.core.data.network.api.TmdbApiService
@@ -15,8 +21,10 @@ import com.example.cinemaxapp.core.domain.repository.MovieRepository
 import com.example.cinemaxapp.core.model.FeaturedBanner
 import com.example.cinemaxapp.core.model.Movie
 import com.example.cinemaxapp.core.model.MovieCategory
+import com.example.cinemaxapp.core.model.MovieDetails
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -28,6 +36,7 @@ class MovieRepositoryImpl @Inject constructor(
     private val tmdbApiService: TmdbApiService,
     private val movieDao: MovieDao,
     private val genreDao: GenreDao,
+    private val creditDao: CreditDao,
 ) : MovieRepository {
 
     // JOB 1: SERVE THE UI — Read from Room (source of truth)
@@ -149,6 +158,63 @@ class MovieRepositoryImpl @Inject constructor(
     }
 
     override suspend fun toggleWishlist(movieId: String): Boolean = true
+
+
+    // JOB 1+2: MOVIE DETAILS (read + sync)
+
+    override fun getMovieDetails(movieId: Int): Flow<MovieDetails?> {
+        return combine(
+            creditDao.getMovieWithCredits(movieId),
+            creditDao.getMovieCreditRefs(movieId),
+        ) { movieWithCredits, creditRefs ->
+            movieWithCredits?.toMovieDetails(creditRefs)
+        }
+    }
+
+
+    override suspend fun syncMovieDetails(movieId: Int) {
+        withContext(Dispatchers.IO) {
+            try {
+                val dto = tmdbApiService.getMovieDetails(movieId)
+
+                // 1. Upsert MovieEntity with full detail fields
+                movieDao.upsertMovies(listOf(dto.toMovieEntity()))
+
+                // 2. Upsert genre cross-refs from the full genre list
+                val crossRefs = dto.genres.map {
+                    MovieGenreCrossRef(
+                        movieId = dto.id,
+                        genreId = it.id,
+                    )
+                }
+                if (crossRefs.isNotEmpty()) {
+                    movieDao.upsertCrossRefs(crossRefs)
+                }
+
+                // 3. Upsert CreditEntity rows (person info — deduplicated by personId PK)
+                val castEntities = dto.credits?.cast?.map { it.toCreditEntity() } ?: emptyList()
+                val crewEntities = dto.credits?.crew
+                    ?.filter { it.job in RELEVANT_CREW_JOBS }
+                    ?.map { it.toCreditEntity() } ?: emptyList()
+                creditDao.upsertAll(castEntities + crewEntities)
+
+                // 4. Clear old credit refs for this movie before inserting fresh set
+                creditDao.clearCreditsForMovie(movieId)
+
+                // 5. Upsert new MovieCreditRef rows
+                val castRefs = dto.credits?.cast?.map { it.toMovieCreditRef(dto.id) } ?: emptyList()
+                val crewRefs = dto.credits?.crew
+                    ?.filter { it.job in RELEVANT_CREW_JOBS }
+                    ?.map { it.toMovieCreditRef(dto.id) } ?: emptyList()
+                creditDao.upsertMovieCreditRefs(castRefs + crewRefs)
+
+                Log.d(TAG, "syncMovieDetails: complete for movie $movieId")
+            } catch (e: Exception) {
+                Log.e(TAG, "syncMovieDetails: failed for movie=$movieId — ${e.message}")
+            }
+        }
+    }
+
 
     private companion object {
         const val TAG = "MovieRepositoryImpl"
