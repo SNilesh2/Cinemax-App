@@ -23,4 +23,15 @@ object CinemaxIcons {
     val Profile = R.drawable.ic_profile
     val Star = R.drawable.ic_star
 
+
+    //movie Details
+
+    val Calendar = R.drawable.ic_calendar
+
+    val Clock = R.drawable.ic_clock
+
+    val Film = R.drawable.ic_film
+
+    val External = R.drawable.ic_external
+
 }

@@ -227,7 +227,10 @@ fun CreditEntity.toCreditPerson(ref: MovieCreditRef): CreditPerson {
 }
 
 
-fun MovieWithCredits.toMovieDetails(creditRefs: List<MovieCreditRef>): MovieDetails {
+fun MovieWithCredits.toMovieDetails(
+    creditRefs: List<MovieCreditRef>,
+    genreEntities: List<GenreEntity> = emptyList(),
+): MovieDetails {
     val movie = this.movie
 
     // Build a lookup map: personId → MovieCreditRef for fast joining
@@ -276,6 +279,7 @@ fun MovieWithCredits.toMovieDetails(creditRefs: List<MovieCreditRef>): MovieDeta
     // Rating — vote_average is on a 0–10 scale; round to 1 decimal for display
     val rating = movie.voteAverage ?: 0.0
 
+    val genreNames = genreEntities.map { it.name }
     return MovieDetails(
         id          = movie.id.toString(),
         title       = movie.title,
@@ -284,7 +288,7 @@ fun MovieWithCredits.toMovieDetails(creditRefs: List<MovieCreditRef>): MovieDeta
         backdropUrl = backdropUrl,
         releaseYear = releaseYear,
         runtime     = runtimeStr,
-        genres      = emptyList(), // genres are joined separately; see MovieRepositoryImpl
+        genres      = genreNames,
         rating      = rating,
         overview    = movie.overview.orEmpty(),
         homepage    = movie.homepage.orEmpty(),

@@ -7,6 +7,7 @@ import androidx.room.Upsert
 import com.example.cinemaxapp.core.data.local.database.entity.GenreWithMovies
 import com.example.cinemaxapp.core.data.local.database.entity.MovieEntity
 import com.example.cinemaxapp.core.data.local.database.entity.MovieGenreCrossRef
+import com.example.cinemaxapp.core.data.local.database.entity.MovieWithGenres
 import com.example.cinemaxapp.core.data.local.database.entity.NowPlayingMovieRef
 import kotlinx.coroutines.flow.Flow
 
@@ -49,4 +50,9 @@ interface MovieDao {
     @Transaction
     @Query("SELECT * FROM genres WHERE id = :genreId")
     fun getGenreWithMovies(genreId: Int): Flow<GenreWithMovies?>
+
+    @Transaction
+    @Query("SELECT * FROM movies WHERE id = :movieId")
+    fun getMovieWithGenres(movieId: Int): Flow<MovieWithGenres?>
+
 }

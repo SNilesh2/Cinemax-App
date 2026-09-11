@@ -10,7 +10,8 @@ import com.example.cinemaxapp.feature.auth.navigation.AuthRoute
 import com.example.cinemaxapp.feature.auth.navigation.authGraph
 import com.example.cinemaxapp.feature.home.navigation.HomeRoute
 import com.example.cinemaxapp.feature.home.navigation.homeScreen
-
+import com.example.cinemaxapp.feature.movie_details.navigation.movieDetailsScreen
+import com.example.cinemaxapp.feature.movie_details.navigation.navigateToMovieDetails
 @Composable
 fun CinemaxNavHost(
     modifier: Modifier = Modifier,
@@ -26,11 +27,13 @@ fun CinemaxNavHost(
 
         homeScreen(
             onMovieClick = { movieId ->
-                // Navigate to Movie Details in future feature
+                movieId.toIntOrNull()?.let { navController.navigateToMovieDetails(it) }
             },
             onSeeAllClick = {
                 // Navigate to See All Movies in future feature
             },
         )
+
+        movieDetailsScreen(navController = navController)
     }
 }

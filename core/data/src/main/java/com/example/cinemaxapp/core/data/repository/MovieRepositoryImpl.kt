@@ -164,10 +164,15 @@ class MovieRepositoryImpl @Inject constructor(
 
     override fun getMovieDetails(movieId: Int): Flow<MovieDetails?> {
         return combine(
+            movieDao.getMovieWithGenres(movieId),
             creditDao.getMovieWithCredits(movieId),
             creditDao.getMovieCreditRefs(movieId),
-        ) { movieWithCredits, creditRefs ->
-            movieWithCredits?.toMovieDetails(creditRefs)
+        ) { movieWithGenres , movieWithCredits, creditRefs ->
+            val genreEntities = movieWithGenres?.genres ?: emptyList()
+            movieWithCredits?.toMovieDetails(
+                creditRefs,
+                genreEntities = genreEntities,
+            )
         }
     }
 
@@ -180,7 +185,14 @@ class MovieRepositoryImpl @Inject constructor(
                 // 1. Upsert MovieEntity with full detail fields
                 movieDao.upsertMovies(listOf(dto.toMovieEntity()))
 
-                // 2. Upsert genre cross-refs from the full genre list
+
+                // 2. Upsert genre entities and cross-refs from the full genre list
+                val genreEntities = dto.genres.map { it.toGenreEntity() }
+                if(genreEntities.isNotEmpty())
+                {
+                    genreDao.upsertAll(genreEntities)
+                }
+
                 val crossRefs = dto.genres.map {
                     MovieGenreCrossRef(
                         movieId = dto.id,

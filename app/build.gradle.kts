@@ -49,7 +49,7 @@ dependencies {
     // Feature modules
     implementation(project(":feature:auth"))
     implementation(project(":feature:home"))
-
+    implementation(project(":feature:movie_details"))
 
     // Core modules
     implementation(project(":core:designsystem"))

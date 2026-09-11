@@ -20,10 +20,12 @@ import com.example.cinemaxapp.core.data.local.database.entity.GenreEntity;
 import com.example.cinemaxapp.core.data.local.database.entity.GenreWithMovies;
 import com.example.cinemaxapp.core.data.local.database.entity.MovieEntity;
 import com.example.cinemaxapp.core.data.local.database.entity.MovieGenreCrossRef;
+import com.example.cinemaxapp.core.data.local.database.entity.MovieWithGenres;
 import com.example.cinemaxapp.core.data.local.database.entity.NowPlayingMovieRef;
 import java.lang.Class;
 import java.lang.Double;
 import java.lang.Exception;
+import java.lang.Integer;
 import java.lang.Object;
 import java.lang.Override;
 import java.lang.String;
@@ -75,7 +77,7 @@ public final class MovieDao_Impl implements MovieDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT INTO `movies` (`id`,`title`,`backdrop_path`,`poster_path`,`release_date`,`vote_average`) VALUES (?,?,?,?,?,?)";
+        return "INSERT INTO `movies` (`id`,`title`,`backdrop_path`,`poster_path`,`release_date`,`vote_average`,`overview`,`runtime`,`tagline`,`homepage`) VALUES (?,?,?,?,?,?,?,?,?,?)";
       }
 
       @Override
@@ -102,13 +104,33 @@ public final class MovieDao_Impl implements MovieDao {
           statement.bindNull(6);
         } else {
           statement.bindDouble(6, entity.getVoteAverage());
+        }
+        if (entity.getOverview() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindString(7, entity.getOverview());
+        }
+        if (entity.getRuntime() == null) {
+          statement.bindNull(8);
+        } else {
+          statement.bindLong(8, entity.getRuntime());
+        }
+        if (entity.getTagline() == null) {
+          statement.bindNull(9);
+        } else {
+          statement.bindString(9, entity.getTagline());
+        }
+        if (entity.getHomepage() == null) {
+          statement.bindNull(10);
+        } else {
+          statement.bindString(10, entity.getHomepage());
         }
       }
     }, new EntityDeletionOrUpdateAdapter<MovieEntity>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "UPDATE `movies` SET `id` = ?,`title` = ?,`backdrop_path` = ?,`poster_path` = ?,`release_date` = ?,`vote_average` = ? WHERE `id` = ?";
+        return "UPDATE `movies` SET `id` = ?,`title` = ?,`backdrop_path` = ?,`poster_path` = ?,`release_date` = ?,`vote_average` = ?,`overview` = ?,`runtime` = ?,`tagline` = ?,`homepage` = ? WHERE `id` = ?";
       }
 
       @Override
@@ -136,7 +158,27 @@ public final class MovieDao_Impl implements MovieDao {
         } else {
           statement.bindDouble(6, entity.getVoteAverage());
         }
-        statement.bindLong(7, entity.getId());
+        if (entity.getOverview() == null) {
+          statement.bindNull(7);
+        } else {
+          statement.bindString(7, entity.getOverview());
+        }
+        if (entity.getRuntime() == null) {
+          statement.bindNull(8);
+        } else {
+          statement.bindLong(8, entity.getRuntime());
+        }
+        if (entity.getTagline() == null) {
+          statement.bindNull(9);
+        } else {
+          statement.bindString(9, entity.getTagline());
+        }
+        if (entity.getHomepage() == null) {
+          statement.bindNull(10);
+        } else {
+          statement.bindString(10, entity.getHomepage());
+        }
+        statement.bindLong(11, entity.getId());
       }
     });
     this.__upsertionAdapterOfNowPlayingMovieRef = new EntityUpsertionAdapter<NowPlayingMovieRef>(new EntityInsertionAdapter<NowPlayingMovieRef>(__db) {
@@ -324,6 +366,10 @@ public final class MovieDao_Impl implements MovieDao {
           final int _cursorIndexOfPosterPath = CursorUtil.getColumnIndexOrThrow(_cursor, "poster_path");
           final int _cursorIndexOfReleaseDate = CursorUtil.getColumnIndexOrThrow(_cursor, "release_date");
           final int _cursorIndexOfVoteAverage = CursorUtil.getColumnIndexOrThrow(_cursor, "vote_average");
+          final int _cursorIndexOfOverview = CursorUtil.getColumnIndexOrThrow(_cursor, "overview");
+          final int _cursorIndexOfRuntime = CursorUtil.getColumnIndexOrThrow(_cursor, "runtime");
+          final int _cursorIndexOfTagline = CursorUtil.getColumnIndexOrThrow(_cursor, "tagline");
+          final int _cursorIndexOfHomepage = CursorUtil.getColumnIndexOrThrow(_cursor, "homepage");
           final List<MovieEntity> _result = new ArrayList<MovieEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
             final MovieEntity _item;
@@ -355,7 +401,31 @@ public final class MovieDao_Impl implements MovieDao {
             } else {
               _tmpVoteAverage = _cursor.getDouble(_cursorIndexOfVoteAverage);
             }
-            _item = new MovieEntity(_tmpId,_tmpTitle,_tmpBackdropPath,_tmpPosterPath,_tmpReleaseDate,_tmpVoteAverage);
+            final String _tmpOverview;
+            if (_cursor.isNull(_cursorIndexOfOverview)) {
+              _tmpOverview = null;
+            } else {
+              _tmpOverview = _cursor.getString(_cursorIndexOfOverview);
+            }
+            final Integer _tmpRuntime;
+            if (_cursor.isNull(_cursorIndexOfRuntime)) {
+              _tmpRuntime = null;
+            } else {
+              _tmpRuntime = _cursor.getInt(_cursorIndexOfRuntime);
+            }
+            final String _tmpTagline;
+            if (_cursor.isNull(_cursorIndexOfTagline)) {
+              _tmpTagline = null;
+            } else {
+              _tmpTagline = _cursor.getString(_cursorIndexOfTagline);
+            }
+            final String _tmpHomepage;
+            if (_cursor.isNull(_cursorIndexOfHomepage)) {
+              _tmpHomepage = null;
+            } else {
+              _tmpHomepage = _cursor.getString(_cursorIndexOfHomepage);
+            }
+            _item = new MovieEntity(_tmpId,_tmpTitle,_tmpBackdropPath,_tmpPosterPath,_tmpReleaseDate,_tmpVoteAverage,_tmpOverview,_tmpRuntime,_tmpTagline,_tmpHomepage);
             _result.add(_item);
           }
           return _result;
@@ -431,6 +501,122 @@ public final class MovieDao_Impl implements MovieDao {
     });
   }
 
+  @Override
+  public Flow<MovieWithGenres> getMovieWithGenres(final int movieId) {
+    final String _sql = "SELECT * FROM movies WHERE id = ?";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, movieId);
+    return CoroutinesRoom.createFlow(__db, true, new String[] {"movie_genre_cross_ref", "genres",
+        "movies"}, new Callable<MovieWithGenres>() {
+      @Override
+      @Nullable
+      public MovieWithGenres call() throws Exception {
+        __db.beginTransaction();
+        try {
+          final Cursor _cursor = DBUtil.query(__db, _statement, true, null);
+          try {
+            final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+            final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
+            final int _cursorIndexOfBackdropPath = CursorUtil.getColumnIndexOrThrow(_cursor, "backdrop_path");
+            final int _cursorIndexOfPosterPath = CursorUtil.getColumnIndexOrThrow(_cursor, "poster_path");
+            final int _cursorIndexOfReleaseDate = CursorUtil.getColumnIndexOrThrow(_cursor, "release_date");
+            final int _cursorIndexOfVoteAverage = CursorUtil.getColumnIndexOrThrow(_cursor, "vote_average");
+            final int _cursorIndexOfOverview = CursorUtil.getColumnIndexOrThrow(_cursor, "overview");
+            final int _cursorIndexOfRuntime = CursorUtil.getColumnIndexOrThrow(_cursor, "runtime");
+            final int _cursorIndexOfTagline = CursorUtil.getColumnIndexOrThrow(_cursor, "tagline");
+            final int _cursorIndexOfHomepage = CursorUtil.getColumnIndexOrThrow(_cursor, "homepage");
+            final LongSparseArray<ArrayList<GenreEntity>> _collectionGenres = new LongSparseArray<ArrayList<GenreEntity>>();
+            while (_cursor.moveToNext()) {
+              final long _tmpKey;
+              _tmpKey = _cursor.getLong(_cursorIndexOfId);
+              if (!_collectionGenres.containsKey(_tmpKey)) {
+                _collectionGenres.put(_tmpKey, new ArrayList<GenreEntity>());
+              }
+            }
+            _cursor.moveToPosition(-1);
+            __fetchRelationshipgenresAscomExampleCinemaxappCoreDataLocalDatabaseEntityGenreEntity(_collectionGenres);
+            final MovieWithGenres _result;
+            if (_cursor.moveToFirst()) {
+              final MovieEntity _tmpMovie;
+              final int _tmpId;
+              _tmpId = _cursor.getInt(_cursorIndexOfId);
+              final String _tmpTitle;
+              _tmpTitle = _cursor.getString(_cursorIndexOfTitle);
+              final String _tmpBackdropPath;
+              if (_cursor.isNull(_cursorIndexOfBackdropPath)) {
+                _tmpBackdropPath = null;
+              } else {
+                _tmpBackdropPath = _cursor.getString(_cursorIndexOfBackdropPath);
+              }
+              final String _tmpPosterPath;
+              if (_cursor.isNull(_cursorIndexOfPosterPath)) {
+                _tmpPosterPath = null;
+              } else {
+                _tmpPosterPath = _cursor.getString(_cursorIndexOfPosterPath);
+              }
+              final String _tmpReleaseDate;
+              if (_cursor.isNull(_cursorIndexOfReleaseDate)) {
+                _tmpReleaseDate = null;
+              } else {
+                _tmpReleaseDate = _cursor.getString(_cursorIndexOfReleaseDate);
+              }
+              final Double _tmpVoteAverage;
+              if (_cursor.isNull(_cursorIndexOfVoteAverage)) {
+                _tmpVoteAverage = null;
+              } else {
+                _tmpVoteAverage = _cursor.getDouble(_cursorIndexOfVoteAverage);
+              }
+              final String _tmpOverview;
+              if (_cursor.isNull(_cursorIndexOfOverview)) {
+                _tmpOverview = null;
+              } else {
+                _tmpOverview = _cursor.getString(_cursorIndexOfOverview);
+              }
+              final Integer _tmpRuntime;
+              if (_cursor.isNull(_cursorIndexOfRuntime)) {
+                _tmpRuntime = null;
+              } else {
+                _tmpRuntime = _cursor.getInt(_cursorIndexOfRuntime);
+              }
+              final String _tmpTagline;
+              if (_cursor.isNull(_cursorIndexOfTagline)) {
+                _tmpTagline = null;
+              } else {
+                _tmpTagline = _cursor.getString(_cursorIndexOfTagline);
+              }
+              final String _tmpHomepage;
+              if (_cursor.isNull(_cursorIndexOfHomepage)) {
+                _tmpHomepage = null;
+              } else {
+                _tmpHomepage = _cursor.getString(_cursorIndexOfHomepage);
+              }
+              _tmpMovie = new MovieEntity(_tmpId,_tmpTitle,_tmpBackdropPath,_tmpPosterPath,_tmpReleaseDate,_tmpVoteAverage,_tmpOverview,_tmpRuntime,_tmpTagline,_tmpHomepage);
+              final ArrayList<GenreEntity> _tmpGenresCollection;
+              final long _tmpKey_1;
+              _tmpKey_1 = _cursor.getLong(_cursorIndexOfId);
+              _tmpGenresCollection = _collectionGenres.get(_tmpKey_1);
+              _result = new MovieWithGenres(_tmpMovie,_tmpGenresCollection);
+            } else {
+              _result = null;
+            }
+            __db.setTransactionSuccessful();
+            return _result;
+          } finally {
+            _cursor.close();
+          }
+        } finally {
+          __db.endTransaction();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
+  }
+
   @NonNull
   public static List<Class<?>> getRequiredConverters() {
     return Collections.emptyList();
@@ -449,7 +635,7 @@ public final class MovieDao_Impl implements MovieDao {
       return;
     }
     final StringBuilder _stringBuilder = StringUtil.newStringBuilder();
-    _stringBuilder.append("SELECT `movies`.`id` AS `id`,`movies`.`title` AS `title`,`movies`.`backdrop_path` AS `backdrop_path`,`movies`.`poster_path` AS `poster_path`,`movies`.`release_date` AS `release_date`,`movies`.`vote_average` AS `vote_average`,_junction.`genre_id` FROM `movie_genre_cross_ref` AS _junction INNER JOIN `movies` ON (_junction.`movie_id` = `movies`.`id`) WHERE _junction.`genre_id` IN (");
+    _stringBuilder.append("SELECT `movies`.`id` AS `id`,`movies`.`title` AS `title`,`movies`.`backdrop_path` AS `backdrop_path`,`movies`.`poster_path` AS `poster_path`,`movies`.`release_date` AS `release_date`,`movies`.`vote_average` AS `vote_average`,`movies`.`overview` AS `overview`,`movies`.`runtime` AS `runtime`,`movies`.`tagline` AS `tagline`,`movies`.`homepage` AS `homepage`,_junction.`genre_id` FROM `movie_genre_cross_ref` AS _junction INNER JOIN `movies` ON (_junction.`movie_id` = `movies`.`id`) WHERE _junction.`genre_id` IN (");
     final int _inputSize = _map.size();
     StringUtil.appendPlaceholders(_stringBuilder, _inputSize);
     _stringBuilder.append(")");
@@ -465,7 +651,7 @@ public final class MovieDao_Impl implements MovieDao {
     final Cursor _cursor = DBUtil.query(__db, _stmt, false, null);
     try {
       // _junction.genre_id;
-      final int _itemKeyIndex = 6;
+      final int _itemKeyIndex = 10;
       if (_itemKeyIndex == -1) {
         return;
       }
@@ -475,6 +661,10 @@ public final class MovieDao_Impl implements MovieDao {
       final int _cursorIndexOfPosterPath = 3;
       final int _cursorIndexOfReleaseDate = 4;
       final int _cursorIndexOfVoteAverage = 5;
+      final int _cursorIndexOfOverview = 6;
+      final int _cursorIndexOfRuntime = 7;
+      final int _cursorIndexOfTagline = 8;
+      final int _cursorIndexOfHomepage = 9;
       while (_cursor.moveToNext()) {
         final long _tmpKey;
         _tmpKey = _cursor.getLong(_itemKeyIndex);
@@ -509,7 +699,85 @@ public final class MovieDao_Impl implements MovieDao {
           } else {
             _tmpVoteAverage = _cursor.getDouble(_cursorIndexOfVoteAverage);
           }
-          _item_1 = new MovieEntity(_tmpId,_tmpTitle,_tmpBackdropPath,_tmpPosterPath,_tmpReleaseDate,_tmpVoteAverage);
+          final String _tmpOverview;
+          if (_cursor.isNull(_cursorIndexOfOverview)) {
+            _tmpOverview = null;
+          } else {
+            _tmpOverview = _cursor.getString(_cursorIndexOfOverview);
+          }
+          final Integer _tmpRuntime;
+          if (_cursor.isNull(_cursorIndexOfRuntime)) {
+            _tmpRuntime = null;
+          } else {
+            _tmpRuntime = _cursor.getInt(_cursorIndexOfRuntime);
+          }
+          final String _tmpTagline;
+          if (_cursor.isNull(_cursorIndexOfTagline)) {
+            _tmpTagline = null;
+          } else {
+            _tmpTagline = _cursor.getString(_cursorIndexOfTagline);
+          }
+          final String _tmpHomepage;
+          if (_cursor.isNull(_cursorIndexOfHomepage)) {
+            _tmpHomepage = null;
+          } else {
+            _tmpHomepage = _cursor.getString(_cursorIndexOfHomepage);
+          }
+          _item_1 = new MovieEntity(_tmpId,_tmpTitle,_tmpBackdropPath,_tmpPosterPath,_tmpReleaseDate,_tmpVoteAverage,_tmpOverview,_tmpRuntime,_tmpTagline,_tmpHomepage);
+          _tmpRelation.add(_item_1);
+        }
+      }
+    } finally {
+      _cursor.close();
+    }
+  }
+
+  private void __fetchRelationshipgenresAscomExampleCinemaxappCoreDataLocalDatabaseEntityGenreEntity(
+      @NonNull final LongSparseArray<ArrayList<GenreEntity>> _map) {
+    if (_map.isEmpty()) {
+      return;
+    }
+    if (_map.size() > RoomDatabase.MAX_BIND_PARAMETER_CNT) {
+      RelationUtil.recursiveFetchLongSparseArray(_map, true, (map) -> {
+        __fetchRelationshipgenresAscomExampleCinemaxappCoreDataLocalDatabaseEntityGenreEntity(map);
+        return Unit.INSTANCE;
+      });
+      return;
+    }
+    final StringBuilder _stringBuilder = StringUtil.newStringBuilder();
+    _stringBuilder.append("SELECT `genres`.`id` AS `id`,`genres`.`name` AS `name`,_junction.`movie_id` FROM `movie_genre_cross_ref` AS _junction INNER JOIN `genres` ON (_junction.`genre_id` = `genres`.`id`) WHERE _junction.`movie_id` IN (");
+    final int _inputSize = _map.size();
+    StringUtil.appendPlaceholders(_stringBuilder, _inputSize);
+    _stringBuilder.append(")");
+    final String _sql = _stringBuilder.toString();
+    final int _argCount = 0 + _inputSize;
+    final RoomSQLiteQuery _stmt = RoomSQLiteQuery.acquire(_sql, _argCount);
+    int _argIndex = 1;
+    for (int i = 0; i < _map.size(); i++) {
+      final long _item = _map.keyAt(i);
+      _stmt.bindLong(_argIndex, _item);
+      _argIndex++;
+    }
+    final Cursor _cursor = DBUtil.query(__db, _stmt, false, null);
+    try {
+      // _junction.movie_id;
+      final int _itemKeyIndex = 2;
+      if (_itemKeyIndex == -1) {
+        return;
+      }
+      final int _cursorIndexOfId = 0;
+      final int _cursorIndexOfName = 1;
+      while (_cursor.moveToNext()) {
+        final long _tmpKey;
+        _tmpKey = _cursor.getLong(_itemKeyIndex);
+        final ArrayList<GenreEntity> _tmpRelation = _map.get(_tmpKey);
+        if (_tmpRelation != null) {
+          final GenreEntity _item_1;
+          final int _tmpId;
+          _tmpId = _cursor.getInt(_cursorIndexOfId);
+          final String _tmpName;
+          _tmpName = _cursor.getString(_cursorIndexOfName);
+          _item_1 = new GenreEntity(_tmpId,_tmpName);
           _tmpRelation.add(_item_1);
         }
       }

@@ -2,8 +2,12 @@ R_DEF: Internal format may change without notice
 local
 drawable ic_apple
 drawable ic_back
+drawable ic_calendar
+drawable ic_clock
 drawable ic_download
+drawable ic_external
 drawable ic_facebook
+drawable ic_film
 drawable ic_filter
 drawable ic_google
 drawable ic_heart
