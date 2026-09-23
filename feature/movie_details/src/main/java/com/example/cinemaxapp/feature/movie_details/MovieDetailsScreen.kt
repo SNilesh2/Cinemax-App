@@ -73,13 +73,16 @@ fun MovieDetailsScreen(
     viewModel: MovieDetailsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isWishlisted by viewModel.isWishlisted.collectAsStateWithLifecycle()
 
     when (val state = uiState) {
         is MovieDetailsUiState.Loading -> MovieDetailsLoadingContent()
         is MovieDetailsUiState.Error   -> MovieDetailsErrorContent(state.message)
         is MovieDetailsUiState.Success -> MovieDetailsContent(
             movieDetails = state.movieDetails,
+            isWishlisted = isWishlisted,
             onBackClick  = { navController.popBackStack() },
+            onWishlistClick = { viewModel.onWishlistToggle() },
         )
     }
 }
@@ -130,7 +133,9 @@ private fun MovieDetailsErrorContent(message: String) {
 @Composable
 private fun MovieDetailsContent(
     movieDetails: MovieDetails,
+    isWishlisted: Boolean,
     onBackClick: () -> Unit,
+    onWishlistClick: () -> Unit,
 ) {
     val context = LocalContext.current
     val scrollState = rememberScrollState()
@@ -189,7 +194,9 @@ private fun MovieDetailsContent(
             // Top bar
             MovieDetailsTopBar(
                 title = movieDetails.title,
+                isWishlisted = isWishlisted,
                 onBackClick = onBackClick,
+                onWishlistClick = onWishlistClick,
             )
 
             Spacer(
@@ -258,7 +265,9 @@ private fun MovieDetailsContent(
 @Composable
 private fun MovieDetailsTopBar(
     title: String,
+    isWishlisted: Boolean,
     onBackClick: () -> Unit,
+    onWishlistClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -301,13 +310,14 @@ private fun MovieDetailsTopBar(
                 .size(32.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(CinemaxTheme.colors.soft)
-                .clickable { /* Future: toggle wishlist */ },
+                .clickable { onWishlistClick() },
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 painter = painterResource(CinemaxIcons.Heart),
-                contentDescription = "Add to favourites",
-                tint = CinemaxTheme.colors.white,
+                contentDescription = if (isWishlisted) "Remove from Wishlist" else "Add to Wishlist",
+                // Red when wishlisted, white when not
+                tint = if (isWishlisted) CinemaxTheme.colors.red else CinemaxTheme.colors.white,
             )
         }
     }

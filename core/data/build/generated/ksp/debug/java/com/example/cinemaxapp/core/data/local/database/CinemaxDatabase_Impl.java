@@ -42,7 +42,7 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(3) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(4) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `movies` (`id` INTEGER NOT NULL, `title` TEXT NOT NULL, `backdrop_path` TEXT, `poster_path` TEXT, `release_date` TEXT, `vote_average` REAL, `overview` TEXT DEFAULT '', `runtime` INTEGER DEFAULT 0, `tagline` TEXT DEFAULT '', `homepage` TEXT DEFAULT '', PRIMARY KEY(`id`))");
@@ -53,8 +53,9 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
         db.execSQL("CREATE TABLE IF NOT EXISTS `movie_credit_ref` (`credit_id` TEXT NOT NULL, `movie_id` INTEGER NOT NULL, `person_id` INTEGER NOT NULL, `credit_type` TEXT NOT NULL, `character` TEXT, `job` TEXT, `department` TEXT, `cast_order` INTEGER NOT NULL, PRIMARY KEY(`credit_id`), FOREIGN KEY(`movie_id`) REFERENCES `movies`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`person_id`) REFERENCES `credits`(`person_id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_movie_credit_ref_movie_id` ON `movie_credit_ref` (`movie_id`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_movie_credit_ref_person_id` ON `movie_credit_ref` (`person_id`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `wishlist_movies_ref` (`movie_id` INTEGER NOT NULL, `added_at` INTEGER NOT NULL, PRIMARY KEY(`movie_id`), FOREIGN KEY(`movie_id`) REFERENCES `movies`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ca87a252bcfc60904efbf6ab6b6f3be9')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e18d518aea2f9f6ff66b2c799d421446')");
       }
 
       @Override
@@ -65,6 +66,7 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
         db.execSQL("DROP TABLE IF EXISTS `now_playing_movies_ref`");
         db.execSQL("DROP TABLE IF EXISTS `credits`");
         db.execSQL("DROP TABLE IF EXISTS `movie_credit_ref`");
+        db.execSQL("DROP TABLE IF EXISTS `wishlist_movies_ref`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -199,9 +201,22 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
                   + " Expected:\n" + _infoMovieCreditRef + "\n"
                   + " Found:\n" + _existingMovieCreditRef);
         }
+        final HashMap<String, TableInfo.Column> _columnsWishlistMoviesRef = new HashMap<String, TableInfo.Column>(2);
+        _columnsWishlistMoviesRef.put("movie_id", new TableInfo.Column("movie_id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsWishlistMoviesRef.put("added_at", new TableInfo.Column("added_at", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysWishlistMoviesRef = new HashSet<TableInfo.ForeignKey>(1);
+        _foreignKeysWishlistMoviesRef.add(new TableInfo.ForeignKey("movies", "CASCADE", "NO ACTION", Arrays.asList("movie_id"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesWishlistMoviesRef = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoWishlistMoviesRef = new TableInfo("wishlist_movies_ref", _columnsWishlistMoviesRef, _foreignKeysWishlistMoviesRef, _indicesWishlistMoviesRef);
+        final TableInfo _existingWishlistMoviesRef = TableInfo.read(db, "wishlist_movies_ref");
+        if (!_infoWishlistMoviesRef.equals(_existingWishlistMoviesRef)) {
+          return new RoomOpenHelper.ValidationResult(false, "wishlist_movies_ref(com.example.cinemaxapp.core.data.local.database.entity.WishlistMovieRef).\n"
+                  + " Expected:\n" + _infoWishlistMoviesRef + "\n"
+                  + " Found:\n" + _existingWishlistMoviesRef);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "ca87a252bcfc60904efbf6ab6b6f3be9", "5e59779ae35880e74cceb19094f1aa14");
+    }, "e18d518aea2f9f6ff66b2c799d421446", "b87a36d0892dfe6fa6f1c35acf1803b6");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -212,7 +227,7 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "movies","genres","movie_genre_cross_ref","now_playing_movies_ref","credits","movie_credit_ref");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "movies","genres","movie_genre_cross_ref","now_playing_movies_ref","credits","movie_credit_ref","wishlist_movies_ref");
   }
 
   @Override
@@ -234,6 +249,7 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
       _db.execSQL("DELETE FROM `now_playing_movies_ref`");
       _db.execSQL("DELETE FROM `credits`");
       _db.execSQL("DELETE FROM `movie_credit_ref`");
+      _db.execSQL("DELETE FROM `wishlist_movies_ref`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();

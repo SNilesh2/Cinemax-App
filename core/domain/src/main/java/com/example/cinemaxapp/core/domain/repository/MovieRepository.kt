@@ -40,5 +40,13 @@ interface MovieRepository {
     suspend fun syncMovieDetails(movieId: Int)
 
 
-    suspend fun toggleWishlist(movieId: String): Boolean
+    // ─── GROUP 1 & 2: Wishlist ──────────────────────────────────────────
+
+    fun getWishlistMovies(): Flow<List<Movie>>
+
+
+    fun isMovieWishlisted(movieId: Int): Flow<Boolean>
+
+
+    suspend fun toggleWishlist(movieId: Int): Boolean
 }

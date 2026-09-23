@@ -64,15 +64,12 @@ fun HomeScreen(
     onSeeAllClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val selectedTab by viewModel.selectedTab.collectAsStateWithLifecycle()
 
     HomeScreenContent(
         modifier = modifier,
         uiState = uiState,
-        selectedTab = selectedTab,
         onCategorySelect = viewModel::onCategorySelected,
         onSearchQueryChange = viewModel::onSearchQueryChanged,
-        onTabSelect = viewModel::onTabSelected,
         onMovieClick = onMovieClick,
         onSeeAllClick = onSeeAllClick,
     )
@@ -82,10 +79,8 @@ fun HomeScreen(
 fun HomeScreenContent(
     modifier: Modifier = Modifier,
     uiState: HomeUiState,
-    selectedTab: HomeBottomTab = HomeBottomTab.HOME,
     onCategorySelect: (String) -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
-    onTabSelect: (HomeBottomTab) -> Unit = {},
     onMovieClick: (String) -> Unit = {},
     onSeeAllClick: () -> Unit = {},
 ) {
@@ -114,7 +109,7 @@ fun HomeScreenContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(bottom = 100.dp) // Space for bottom bar
+                        //.padding(bottom = 100.dp) // Space for bottom bar
                 ) {
                     Spacer(modifier = Modifier.height(52.dp))
 
@@ -122,7 +117,6 @@ fun HomeScreenContent(
                     HomeHeader(
                         userName = uiState.userName,
                         avatarUrl = uiState.userAvatarUrl,
-                        onWishlistClick = {},
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -164,13 +158,6 @@ fun HomeScreenContent(
                 }
             }
         }
-
-        // 8. Bottom Navigation Bar
-        HomeBottomNavigationBar(
-            selectedTab = selectedTab,
-            onTabSelect = onTabSelect,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 
@@ -182,7 +169,6 @@ fun HomeScreenContent(
 private fun HomeHeader(
     userName: String,
     avatarUrl: String,
-    onWishlistClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -232,22 +218,6 @@ private fun HomeHeader(
                     color = CinemaxTheme.colors.grey,
                 )
             }
-        }
-
-        // Wishlist Heart Icon Button
-        IconButton(
-            onClick = onWishlistClick,
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(CinemaxTheme.colors.soft)
-        ) {
-            Icon(
-                painter = painterResource(id = CinemaxIcons.Heart),
-                contentDescription = "Wishlist",
-                tint = CinemaxTheme.colors.red,
-                modifier = Modifier.size(20.dp)
-            )
         }
     }
 }
@@ -621,139 +591,3 @@ private fun MoviePosterCard(
     }
 }
 
-// ============================================================
-// 8. BOTTOM NAVIGATION BAR COMPONENT
-// ============================================================
-
-@Composable
-private fun HomeBottomNavigationBar(
-    selectedTab: HomeBottomTab,
-    onTabSelect: (HomeBottomTab) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 20.dp)
-            .height(72.dp),
-        shape = RoundedCornerShape(36.dp),
-        color = CinemaxTheme.colors.dark,
-        tonalElevation = 8.dp,
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // 1. Home Tab
-            BottomNavItem(
-                iconRes = CinemaxIcons.Home,
-                label = "Home",
-                isSelected = selectedTab == HomeBottomTab.HOME,
-                onClick = { onTabSelect(HomeBottomTab.HOME) },
-            )
-
-            // 2. Search Tab
-            BottomNavItem(
-                iconRes = CinemaxIcons.Search,
-                label = "Search",
-                isSelected = selectedTab == HomeBottomTab.SEARCH,
-                onClick = { onTabSelect(HomeBottomTab.SEARCH) },
-            )
-
-            // 3. Download Tab
-            BottomNavItem(
-                iconRes = CinemaxIcons.Download,
-                label = "Download",
-                isSelected = selectedTab == HomeBottomTab.DOWNLOAD,
-                onClick = { onTabSelect(HomeBottomTab.DOWNLOAD) },
-            )
-
-            // 4. Profile Tab
-            BottomNavItem(
-                iconRes = CinemaxIcons.Profile,
-                label = "Profile",
-                isSelected = selectedTab == HomeBottomTab.PROFILE,
-                onClick = { onTabSelect(HomeBottomTab.PROFILE) },
-            )
-        }
-    }
-}
-
-@Composable
-private fun BottomNavItem(
-    iconRes: Int,
-    label: String?,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    if (isSelected && label != null) {
-        Surface(
-            shape = RoundedCornerShape(20.dp),
-            color = CinemaxTheme.colors.soft,
-            modifier = Modifier.clickable { onClick() },
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = label,
-                    tint = CinemaxTheme.colors.blueAccent,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = label,
-                    style = CinemaxTheme.typography.h5SemiBold,
-                    color = CinemaxTheme.colors.blueAccent,
-                )
-            }
-        }
-    } else {
-        IconButton(onClick = onClick) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = if (isSelected) CinemaxTheme.colors.blueAccent else CinemaxTheme.colors.grey,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-    }
-}
-
-// ============================================================
-// PREVIEWS
-// ============================================================
-
-@Preview(showBackground = true, backgroundColor = 0xFF1F1D2B)
-@Composable
-private fun HomeScreenPreview() {
-    CinemaxTheme {
-        HomeScreenContent(
-            uiState = HomeUiState.Success(
-                userName = "Smith",
-                featuredBanners = listOf(
-                    FeaturedBanner(
-                        id = "b1",
-                        title = "Black Panther: Wakanda\nForever",
-                        releaseDateText = "On March 2, 2022",
-                        bannerImageUrl = "",
-                    )
-                ),
-                categories = listOf(
-                    MovieCategory("1", "All"),
-                    MovieCategory("2", "Comedy"),
-                    MovieCategory("3", "Animation"),
-                    MovieCategory("4", "Documentary"),
-                ),
-                popularMovies = listOf(
-                    Movie("1", "Spider-Man No..", "", 4.5, "Action"),
-                    Movie("2", "Life of PI", "", 4.5, "Action"),
-                    Movie("3", "Riverdale", "", 4.5, "Action"),
-                ),
-            )
-        )
-    }
-}

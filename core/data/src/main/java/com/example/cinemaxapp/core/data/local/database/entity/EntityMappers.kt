@@ -101,6 +101,26 @@ fun GenreEntity.toMovieCategory(): MovieCategory {
 }
 
 
+fun MovieWithGenres.toWishlistMovie(): Movie {
+    val entity = this.movie
+    val posterUrl = when {
+        !entity.posterPath.isNullOrBlank() ->
+            TmdbApiService.IMAGE_BASE_URL_W500 + entity.posterPath
+        else ->
+            "https://images.unsplash.com/photo-1635805737707-575885ab0820?w=600&auto=format&fit=crop&q=80"
+    }
+    val primaryGenre = this.genres.firstOrNull()?.name ?: "Movie"
+    return Movie(
+        id          = entity.id.toString(),
+        title       = entity.title,
+        posterUrl   = posterUrl,
+        rating      = entity.voteAverage ?: 0.0,
+        category    = primaryGenre,
+        releaseDate = entity.releaseDate ?: "",
+        isWishlisted = true,
+    )
+}
+
 
 // Private Helpers
 

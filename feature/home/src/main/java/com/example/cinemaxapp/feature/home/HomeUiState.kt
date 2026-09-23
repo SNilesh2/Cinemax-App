@@ -34,6 +34,6 @@ sealed interface HomeUiState {
 enum class HomeBottomTab {
     HOME,
     SEARCH,
-    DOWNLOAD,
+    WISHLIST,
     PROFILE,
 }

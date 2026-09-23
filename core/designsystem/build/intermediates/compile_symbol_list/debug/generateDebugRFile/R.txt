@@ -3,6 +3,7 @@ int drawable ic_back 0x0
 int drawable ic_calendar 0x0
 int drawable ic_clock 0x0
 int drawable ic_download 0x0
+int drawable ic_empty 0x0
 int drawable ic_external 0x0
 int drawable ic_facebook 0x0
 int drawable ic_film 0x0
@@ -11,6 +12,7 @@ int drawable ic_google 0x0
 int drawable ic_heart 0x0
 int drawable ic_home 0x0
 int drawable ic_logo 0x0
+int drawable ic_play 0x0
 int drawable ic_profile 0x0
 int drawable ic_search 0x0
 int drawable ic_star 0x0

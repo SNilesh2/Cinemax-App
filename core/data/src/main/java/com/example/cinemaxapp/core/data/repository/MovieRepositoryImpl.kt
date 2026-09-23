@@ -6,6 +6,7 @@ import com.example.cinemaxapp.core.data.local.database.dao.GenreDao
 import com.example.cinemaxapp.core.data.local.database.dao.MovieDao
 import com.example.cinemaxapp.core.data.local.database.entity.MovieGenreCrossRef
 import com.example.cinemaxapp.core.data.local.database.entity.RELEVANT_CREW_JOBS
+import com.example.cinemaxapp.core.data.local.database.entity.WishlistMovieRef
 import com.example.cinemaxapp.core.data.local.database.entity.toCreditEntity
 import com.example.cinemaxapp.core.data.local.database.entity.toCrossRef
 import com.example.cinemaxapp.core.data.local.database.entity.toFeaturedBanner
@@ -16,6 +17,7 @@ import com.example.cinemaxapp.core.data.local.database.entity.toMovieCreditRef
 import com.example.cinemaxapp.core.data.local.database.entity.toMovieDetails
 import com.example.cinemaxapp.core.data.local.database.entity.toMovieEntity
 import com.example.cinemaxapp.core.data.local.database.entity.toNowPlayingRef
+import com.example.cinemaxapp.core.data.local.database.entity.toWishlistMovie
 import com.example.cinemaxapp.core.data.network.api.TmdbApiService
 import com.example.cinemaxapp.core.domain.repository.MovieRepository
 import com.example.cinemaxapp.core.model.FeaturedBanner
@@ -157,8 +159,34 @@ class MovieRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun toggleWishlist(movieId: String): Boolean = true
+    // WISHLIST — Read from Room + write to Room
 
+    override fun getWishlistMovies(): Flow<List<Movie>> {
+        return movieDao.getWishlistMoviesWithGenres().map { list ->
+            list.map { it.toWishlistMovie() }
+        }
+    }
+
+
+    override fun isMovieWishlisted(movieId: Int): Flow<Boolean> {
+        return movieDao.isMovieWishlisted(movieId)
+    }
+
+
+    override suspend fun toggleWishlist(movieId: Int): Boolean {
+        return withContext(Dispatchers.IO) {
+            val isCurrentlyWishlisted = movieDao.isMovieWishlistedDirect(movieId)
+            if (isCurrentlyWishlisted) {
+                movieDao.deleteWishlistRef(movieId)
+                Log.d(TAG, "toggleWishlist: removed movie $movieId from wishlist")
+                false
+            } else {
+                movieDao.insertWishlistRef(WishlistMovieRef(movieId = movieId))
+                Log.d(TAG, "toggleWishlist: added movie $movieId to wishlist")
+                true
+            }
+        }
+    }
 
     // JOB 1+2: MOVIE DETAILS (read + sync)
 

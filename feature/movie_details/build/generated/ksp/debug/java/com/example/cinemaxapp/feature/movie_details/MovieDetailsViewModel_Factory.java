@@ -2,7 +2,9 @@ package com.example.cinemaxapp.feature.movie_details;
 
 import androidx.lifecycle.SavedStateHandle;
 import com.example.cinemaxapp.core.domain.usecase.GetMovieDetailsUseCase;
+import com.example.cinemaxapp.core.domain.usecase.IsMovieWishlistedUseCase;
 import com.example.cinemaxapp.core.domain.usecase.SyncMovieDetailsUseCase;
+import com.example.cinemaxapp.core.domain.usecase.ToggleWishlistUseCase;
 import dagger.internal.DaggerGenerated;
 import dagger.internal.Factory;
 import dagger.internal.QualifierMetadata;
@@ -32,29 +34,41 @@ public final class MovieDetailsViewModel_Factory implements Factory<MovieDetails
 
   private final Provider<SyncMovieDetailsUseCase> syncMovieDetailsUseCaseProvider;
 
+  private final Provider<IsMovieWishlistedUseCase> isMovieWishlistedUseCaseProvider;
+
+  private final Provider<ToggleWishlistUseCase> toggleWishlistUseCaseProvider;
+
   public MovieDetailsViewModel_Factory(Provider<SavedStateHandle> savedStateHandleProvider,
       Provider<GetMovieDetailsUseCase> getMovieDetailsUseCaseProvider,
-      Provider<SyncMovieDetailsUseCase> syncMovieDetailsUseCaseProvider) {
+      Provider<SyncMovieDetailsUseCase> syncMovieDetailsUseCaseProvider,
+      Provider<IsMovieWishlistedUseCase> isMovieWishlistedUseCaseProvider,
+      Provider<ToggleWishlistUseCase> toggleWishlistUseCaseProvider) {
     this.savedStateHandleProvider = savedStateHandleProvider;
     this.getMovieDetailsUseCaseProvider = getMovieDetailsUseCaseProvider;
     this.syncMovieDetailsUseCaseProvider = syncMovieDetailsUseCaseProvider;
+    this.isMovieWishlistedUseCaseProvider = isMovieWishlistedUseCaseProvider;
+    this.toggleWishlistUseCaseProvider = toggleWishlistUseCaseProvider;
   }
 
   @Override
   public MovieDetailsViewModel get() {
-    return newInstance(savedStateHandleProvider.get(), getMovieDetailsUseCaseProvider.get(), syncMovieDetailsUseCaseProvider.get());
+    return newInstance(savedStateHandleProvider.get(), getMovieDetailsUseCaseProvider.get(), syncMovieDetailsUseCaseProvider.get(), isMovieWishlistedUseCaseProvider.get(), toggleWishlistUseCaseProvider.get());
   }
 
   public static MovieDetailsViewModel_Factory create(
       Provider<SavedStateHandle> savedStateHandleProvider,
       Provider<GetMovieDetailsUseCase> getMovieDetailsUseCaseProvider,
-      Provider<SyncMovieDetailsUseCase> syncMovieDetailsUseCaseProvider) {
-    return new MovieDetailsViewModel_Factory(savedStateHandleProvider, getMovieDetailsUseCaseProvider, syncMovieDetailsUseCaseProvider);
+      Provider<SyncMovieDetailsUseCase> syncMovieDetailsUseCaseProvider,
+      Provider<IsMovieWishlistedUseCase> isMovieWishlistedUseCaseProvider,
+      Provider<ToggleWishlistUseCase> toggleWishlistUseCaseProvider) {
+    return new MovieDetailsViewModel_Factory(savedStateHandleProvider, getMovieDetailsUseCaseProvider, syncMovieDetailsUseCaseProvider, isMovieWishlistedUseCaseProvider, toggleWishlistUseCaseProvider);
   }
 
   public static MovieDetailsViewModel newInstance(SavedStateHandle savedStateHandle,
       GetMovieDetailsUseCase getMovieDetailsUseCase,
-      SyncMovieDetailsUseCase syncMovieDetailsUseCase) {
-    return new MovieDetailsViewModel(savedStateHandle, getMovieDetailsUseCase, syncMovieDetailsUseCase);
+      SyncMovieDetailsUseCase syncMovieDetailsUseCase,
+      IsMovieWishlistedUseCase isMovieWishlistedUseCase,
+      ToggleWishlistUseCase toggleWishlistUseCase) {
+    return new MovieDetailsViewModel(savedStateHandle, getMovieDetailsUseCase, syncMovieDetailsUseCase, isMovieWishlistedUseCase, toggleWishlistUseCase);
   }
 }

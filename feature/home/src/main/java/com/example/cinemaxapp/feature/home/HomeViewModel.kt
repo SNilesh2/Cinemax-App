@@ -36,9 +36,6 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    private val _selectedTab = MutableStateFlow(HomeBottomTab.HOME)
-    val selectedTab: StateFlow<HomeBottomTab> = _selectedTab.asStateFlow()
-
 
     private var currentGenreId: String = "0"
 
@@ -179,9 +176,5 @@ class HomeViewModel @Inject constructor(
         if (current is HomeUiState.Success) {
             _uiState.value = current.copy(searchQuery = query)
         }
-    }
-
-    fun onTabSelected(tab: HomeBottomTab) {
-        _selectedTab.value = tab
     }
 }

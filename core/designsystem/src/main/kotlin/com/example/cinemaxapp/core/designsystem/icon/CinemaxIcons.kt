@@ -34,4 +34,9 @@ object CinemaxIcons {
 
     val External = R.drawable.ic_external
 
+    //wishlist
+
+    val Empty = R.drawable.ic_empty
+
+    val Play = R.drawable.ic_play
 }

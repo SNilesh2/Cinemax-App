@@ -1,6 +1,7 @@
 package com.example.cinemaxapp.core.data.local.database.dao;
 
 import android.database.Cursor;
+import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.collection.LongSparseArray;
@@ -22,6 +23,8 @@ import com.example.cinemaxapp.core.data.local.database.entity.MovieEntity;
 import com.example.cinemaxapp.core.data.local.database.entity.MovieGenreCrossRef;
 import com.example.cinemaxapp.core.data.local.database.entity.MovieWithGenres;
 import com.example.cinemaxapp.core.data.local.database.entity.NowPlayingMovieRef;
+import com.example.cinemaxapp.core.data.local.database.entity.WishlistMovieRef;
+import java.lang.Boolean;
 import java.lang.Class;
 import java.lang.Double;
 import java.lang.Exception;
@@ -45,9 +48,13 @@ import kotlinx.coroutines.flow.Flow;
 public final class MovieDao_Impl implements MovieDao {
   private final RoomDatabase __db;
 
+  private final EntityInsertionAdapter<WishlistMovieRef> __insertionAdapterOfWishlistMovieRef;
+
   private final SharedSQLiteStatement __preparedStmtOfClearNowPlayingRefs;
 
   private final SharedSQLiteStatement __preparedStmtOfClearCrossRefsForGenre;
+
+  private final SharedSQLiteStatement __preparedStmtOfDeleteWishlistRef;
 
   private final EntityUpsertionAdapter<MovieEntity> __upsertionAdapterOfMovieEntity;
 
@@ -57,6 +64,20 @@ public final class MovieDao_Impl implements MovieDao {
 
   public MovieDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
+    this.__insertionAdapterOfWishlistMovieRef = new EntityInsertionAdapter<WishlistMovieRef>(__db) {
+      @Override
+      @NonNull
+      protected String createQuery() {
+        return "INSERT OR REPLACE INTO `wishlist_movies_ref` (`movie_id`,`added_at`) VALUES (?,?)";
+      }
+
+      @Override
+      protected void bind(@NonNull final SupportSQLiteStatement statement,
+          @NonNull final WishlistMovieRef entity) {
+        statement.bindLong(1, entity.getMovieId());
+        statement.bindLong(2, entity.getAddedAt());
+      }
+    };
     this.__preparedStmtOfClearNowPlayingRefs = new SharedSQLiteStatement(__db) {
       @Override
       @NonNull
@@ -70,6 +91,14 @@ public final class MovieDao_Impl implements MovieDao {
       @NonNull
       public String createQuery() {
         final String _query = "DELETE FROM movie_genre_cross_ref WHERE genre_id = ?";
+        return _query;
+      }
+    };
+    this.__preparedStmtOfDeleteWishlistRef = new SharedSQLiteStatement(__db) {
+      @Override
+      @NonNull
+      public String createQuery() {
+        final String _query = "DELETE FROM wishlist_movies_ref WHERE movie_id = ?";
         return _query;
       }
     };
@@ -239,6 +268,25 @@ public final class MovieDao_Impl implements MovieDao {
   }
 
   @Override
+  public Object insertWishlistRef(final WishlistMovieRef ref,
+      final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        __db.beginTransaction();
+        try {
+          __insertionAdapterOfWishlistMovieRef.insert(ref);
+          __db.setTransactionSuccessful();
+          return Unit.INSTANCE;
+        } finally {
+          __db.endTransaction();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Object clearNowPlayingRefs(final Continuation<? super Unit> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
       @Override
@@ -282,6 +330,31 @@ public final class MovieDao_Impl implements MovieDao {
           }
         } finally {
           __preparedStmtOfClearCrossRefsForGenre.release(_stmt);
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Object deleteWishlistRef(final int movieId, final Continuation<? super Unit> $completion) {
+    return CoroutinesRoom.execute(__db, true, new Callable<Unit>() {
+      @Override
+      @NonNull
+      public Unit call() throws Exception {
+        final SupportSQLiteStatement _stmt = __preparedStmtOfDeleteWishlistRef.acquire();
+        int _argIndex = 1;
+        _stmt.bindLong(_argIndex, movieId);
+        try {
+          __db.beginTransaction();
+          try {
+            _stmt.executeUpdateDelete();
+            __db.setTransactionSuccessful();
+            return Unit.INSTANCE;
+          } finally {
+            __db.endTransaction();
+          }
+        } finally {
+          __preparedStmtOfDeleteWishlistRef.release(_stmt);
         }
       }
     }, $completion);
@@ -599,6 +672,188 @@ public final class MovieDao_Impl implements MovieDao {
               _result = new MovieWithGenres(_tmpMovie,_tmpGenresCollection);
             } else {
               _result = null;
+            }
+            __db.setTransactionSuccessful();
+            return _result;
+          } finally {
+            _cursor.close();
+          }
+        } finally {
+          __db.endTransaction();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
+  }
+
+  @Override
+  public Flow<Boolean> isMovieWishlisted(final int movieId) {
+    final String _sql = "SELECT EXISTS(SELECT 1 FROM wishlist_movies_ref WHERE movie_id = ?)";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, movieId);
+    return CoroutinesRoom.createFlow(__db, false, new String[] {"wishlist_movies_ref"}, new Callable<Boolean>() {
+      @Override
+      @NonNull
+      public Boolean call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final Boolean _result;
+          if (_cursor.moveToFirst()) {
+            final int _tmp;
+            _tmp = _cursor.getInt(0);
+            _result = _tmp != 0;
+          } else {
+            _result = false;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+        }
+      }
+
+      @Override
+      protected void finalize() {
+        _statement.release();
+      }
+    });
+  }
+
+  @Override
+  public Object isMovieWishlistedDirect(final int movieId,
+      final Continuation<? super Boolean> $completion) {
+    final String _sql = "SELECT EXISTS(SELECT 1 FROM wishlist_movies_ref WHERE movie_id = ?)";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
+    int _argIndex = 1;
+    _statement.bindLong(_argIndex, movieId);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<Boolean>() {
+      @Override
+      @NonNull
+      public Boolean call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final Boolean _result;
+          if (_cursor.moveToFirst()) {
+            final int _tmp;
+            _tmp = _cursor.getInt(0);
+            _result = _tmp != 0;
+          } else {
+            _result = false;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
+  public Flow<List<MovieWithGenres>> getWishlistMoviesWithGenres() {
+    final String _sql = "\n"
+            + "        SELECT m.* FROM movies m\n"
+            + "        INNER JOIN wishlist_movies_ref ref ON m.id = ref.movie_id\n"
+            + "        ORDER BY ref.added_at DESC\n"
+            + "    ";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    return CoroutinesRoom.createFlow(__db, true, new String[] {"movie_genre_cross_ref", "genres",
+        "movies", "wishlist_movies_ref"}, new Callable<List<MovieWithGenres>>() {
+      @Override
+      @NonNull
+      public List<MovieWithGenres> call() throws Exception {
+        __db.beginTransaction();
+        try {
+          final Cursor _cursor = DBUtil.query(__db, _statement, true, null);
+          try {
+            final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+            final int _cursorIndexOfTitle = CursorUtil.getColumnIndexOrThrow(_cursor, "title");
+            final int _cursorIndexOfBackdropPath = CursorUtil.getColumnIndexOrThrow(_cursor, "backdrop_path");
+            final int _cursorIndexOfPosterPath = CursorUtil.getColumnIndexOrThrow(_cursor, "poster_path");
+            final int _cursorIndexOfReleaseDate = CursorUtil.getColumnIndexOrThrow(_cursor, "release_date");
+            final int _cursorIndexOfVoteAverage = CursorUtil.getColumnIndexOrThrow(_cursor, "vote_average");
+            final int _cursorIndexOfOverview = CursorUtil.getColumnIndexOrThrow(_cursor, "overview");
+            final int _cursorIndexOfRuntime = CursorUtil.getColumnIndexOrThrow(_cursor, "runtime");
+            final int _cursorIndexOfTagline = CursorUtil.getColumnIndexOrThrow(_cursor, "tagline");
+            final int _cursorIndexOfHomepage = CursorUtil.getColumnIndexOrThrow(_cursor, "homepage");
+            final LongSparseArray<ArrayList<GenreEntity>> _collectionGenres = new LongSparseArray<ArrayList<GenreEntity>>();
+            while (_cursor.moveToNext()) {
+              final long _tmpKey;
+              _tmpKey = _cursor.getLong(_cursorIndexOfId);
+              if (!_collectionGenres.containsKey(_tmpKey)) {
+                _collectionGenres.put(_tmpKey, new ArrayList<GenreEntity>());
+              }
+            }
+            _cursor.moveToPosition(-1);
+            __fetchRelationshipgenresAscomExampleCinemaxappCoreDataLocalDatabaseEntityGenreEntity(_collectionGenres);
+            final List<MovieWithGenres> _result = new ArrayList<MovieWithGenres>(_cursor.getCount());
+            while (_cursor.moveToNext()) {
+              final MovieWithGenres _item;
+              final MovieEntity _tmpMovie;
+              final int _tmpId;
+              _tmpId = _cursor.getInt(_cursorIndexOfId);
+              final String _tmpTitle;
+              _tmpTitle = _cursor.getString(_cursorIndexOfTitle);
+              final String _tmpBackdropPath;
+              if (_cursor.isNull(_cursorIndexOfBackdropPath)) {
+                _tmpBackdropPath = null;
+              } else {
+                _tmpBackdropPath = _cursor.getString(_cursorIndexOfBackdropPath);
+              }
+              final String _tmpPosterPath;
+              if (_cursor.isNull(_cursorIndexOfPosterPath)) {
+                _tmpPosterPath = null;
+              } else {
+                _tmpPosterPath = _cursor.getString(_cursorIndexOfPosterPath);
+              }
+              final String _tmpReleaseDate;
+              if (_cursor.isNull(_cursorIndexOfReleaseDate)) {
+                _tmpReleaseDate = null;
+              } else {
+                _tmpReleaseDate = _cursor.getString(_cursorIndexOfReleaseDate);
+              }
+              final Double _tmpVoteAverage;
+              if (_cursor.isNull(_cursorIndexOfVoteAverage)) {
+                _tmpVoteAverage = null;
+              } else {
+                _tmpVoteAverage = _cursor.getDouble(_cursorIndexOfVoteAverage);
+              }
+              final String _tmpOverview;
+              if (_cursor.isNull(_cursorIndexOfOverview)) {
+                _tmpOverview = null;
+              } else {
+                _tmpOverview = _cursor.getString(_cursorIndexOfOverview);
+              }
+              final Integer _tmpRuntime;
+              if (_cursor.isNull(_cursorIndexOfRuntime)) {
+                _tmpRuntime = null;
+              } else {
+                _tmpRuntime = _cursor.getInt(_cursorIndexOfRuntime);
+              }
+              final String _tmpTagline;
+              if (_cursor.isNull(_cursorIndexOfTagline)) {
+                _tmpTagline = null;
+              } else {
+                _tmpTagline = _cursor.getString(_cursorIndexOfTagline);
+              }
+              final String _tmpHomepage;
+              if (_cursor.isNull(_cursorIndexOfHomepage)) {
+                _tmpHomepage = null;
+              } else {
+                _tmpHomepage = _cursor.getString(_cursorIndexOfHomepage);
+              }
+              _tmpMovie = new MovieEntity(_tmpId,_tmpTitle,_tmpBackdropPath,_tmpPosterPath,_tmpReleaseDate,_tmpVoteAverage,_tmpOverview,_tmpRuntime,_tmpTagline,_tmpHomepage);
+              final ArrayList<GenreEntity> _tmpGenresCollection;
+              final long _tmpKey_1;
+              _tmpKey_1 = _cursor.getLong(_cursorIndexOfId);
+              _tmpGenresCollection = _collectionGenres.get(_tmpKey_1);
+              _item = new MovieWithGenres(_tmpMovie,_tmpGenresCollection);
+              _result.add(_item);
             }
             __db.setTransactionSuccessful();
             return _result;

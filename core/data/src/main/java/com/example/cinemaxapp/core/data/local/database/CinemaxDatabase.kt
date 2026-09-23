@@ -11,6 +11,7 @@ import com.example.cinemaxapp.core.data.local.database.entity.MovieCreditRef
 import com.example.cinemaxapp.core.data.local.database.entity.MovieEntity
 import com.example.cinemaxapp.core.data.local.database.entity.MovieGenreCrossRef
 import com.example.cinemaxapp.core.data.local.database.entity.NowPlayingMovieRef
+import com.example.cinemaxapp.core.data.local.database.entity.WishlistMovieRef
 
 
 @Database(
@@ -19,10 +20,11 @@ import com.example.cinemaxapp.core.data.local.database.entity.NowPlayingMovieRef
         GenreEntity::class,
         MovieGenreCrossRef::class,
         NowPlayingMovieRef::class,
-        CreditEntity::class,      // NEW in v3
-        MovieCreditRef::class,
+        CreditEntity::class,      // Added in v3
+        MovieCreditRef::class,    // Added in v3
+        WishlistMovieRef::class,  // Added in v4
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class CinemaxDatabase : RoomDatabase() {

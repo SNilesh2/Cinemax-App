@@ -4,7 +4,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.cinemaxapp.core.domain.usecase.GetMovieDetailsUseCase
+import com.example.cinemaxapp.core.domain.usecase.IsMovieWishlistedUseCase
 import com.example.cinemaxapp.core.domain.usecase.SyncMovieDetailsUseCase
+import com.example.cinemaxapp.core.domain.usecase.ToggleWishlistUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +23,8 @@ class MovieDetailsViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getMovieDetailsUseCase: GetMovieDetailsUseCase,
     private val syncMovieDetailsUseCase: SyncMovieDetailsUseCase,
+    private val isMovieWishlistedUseCase: IsMovieWishlistedUseCase,
+    private val toggleWishlistUseCase: ToggleWishlistUseCase,
 ) : ViewModel() {
 
 
@@ -32,8 +36,13 @@ class MovieDetailsViewModel @Inject constructor(
 
     val uiState: StateFlow<MovieDetailsUiState> = _uiState.asStateFlow()
 
+
+    private val _isWishlisted  = MutableStateFlow(false)
+
+    val isWishlisted: StateFlow<Boolean> = _isWishlisted.asStateFlow()
     init {
         observeMovieDetails()
+        observeWishlistState()
         triggerSync()
     }
 
@@ -56,6 +65,20 @@ class MovieDetailsViewModel @Inject constructor(
     private fun triggerSync() {
         viewModelScope.launch {
             syncMovieDetailsUseCase(movieId)
+        }
+    }
+
+
+    private fun observeWishlistState(){
+        isMovieWishlistedUseCase(movieId)
+            .onEach { wishlisted -> _isWishlisted.value = wishlisted }
+            .launchIn(viewModelScope)
+    }
+
+
+    fun onWishlistToggle(){
+        viewModelScope.launch {
+            toggleWishlistUseCase(movieId)
         }
     }
 }
