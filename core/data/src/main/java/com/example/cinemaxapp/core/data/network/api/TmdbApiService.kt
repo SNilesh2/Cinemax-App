@@ -2,7 +2,9 @@ package com.example.cinemaxapp.core.data.network.api
 
 import com.example.cinemaxapp.core.data.network.model.TmdbGenreResponseDto
 import com.example.cinemaxapp.core.data.network.model.TmdbMovieDetailsDto
+import com.example.cinemaxapp.core.data.network.model.TmdbMultiSearchResponseDto
 import com.example.cinemaxapp.core.data.network.model.TmdbNowPlayingResponseDto
+import org.intellij.lang.annotations.Language
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -40,6 +42,16 @@ interface TmdbApiService {
         @Query("append_to_response") appendToResponse: String = "credits",
         @Query("language")          language: String = "en-US",
     ): TmdbMovieDetailsDto
+
+
+    @GET("search/multi")
+    suspend fun searchMutli(
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+        @Query("language") language: String = "en-US"
+    ) : TmdbMultiSearchResponseDto
+
+
     companion object {
         const val BASE_URL = "https://api.themoviedb.org/3/"
         const val IMAGE_BASE_URL_W780 = "https://image.tmdb.org/t/p/w780"
