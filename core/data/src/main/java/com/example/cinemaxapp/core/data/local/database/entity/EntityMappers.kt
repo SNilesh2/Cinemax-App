@@ -7,6 +7,7 @@ import com.example.cinemaxapp.core.data.network.model.TmdbCrewMemberDto
 import com.example.cinemaxapp.core.data.network.model.TmdbGenreDto
 import com.example.cinemaxapp.core.data.network.model.TmdbMovieDetailsDto
 import com.example.cinemaxapp.core.data.network.model.TmdbMovieDto
+import com.example.cinemaxapp.core.data.network.model.TmdbSearchResultDto
 import com.example.cinemaxapp.core.model.CreditPerson
 import com.example.cinemaxapp.core.model.FeaturedBanner
 import com.example.cinemaxapp.core.model.Movie
@@ -221,6 +222,52 @@ fun TmdbCrewMemberDto.toMovieCreditRef(movieId: Int): MovieCreditRef {
         castOrder  = 0,
     )
 }
+
+
+
+// DTO → Entity Mappers for Search Results
+
+
+fun TmdbSearchResultDto.toMovieEntity(): MovieEntity {
+    return MovieEntity(
+        id           = this.id,
+        title        = this.title ?: "",
+        backdropPath = this.backdropPath,
+        posterPath   = this.posterPath,
+        releaseDate  = this.releaseDate,
+        voteAverage  = this.voteAverage,
+    )
+}
+
+
+fun TmdbSearchResultDto.toCreditEntity(): CreditEntity {
+    return CreditEntity(
+        personId    = this.id,
+        name        = this.name ?: "",
+        profilePath = this.profilePath,
+    )
+}
+
+
+fun TmdbSearchResultDto.toSearchMovieRef(query: String, page: Int, position: Int): SearchMovieRef {
+    return SearchMovieRef(
+        query    = query,
+        movieId  = this.id,
+        page     = page,
+        position = position,
+    )
+}
+
+
+fun TmdbSearchResultDto.toSearchPersonRef(query: String, page: Int, position: Int): SearchPersonRef {
+    return SearchPersonRef(
+        query    = query,
+        personId = this.id,
+        page     = page,
+        position = position,
+    )
+}
+
 
 
 // Entity → Domain Model Mappers for Movie Details

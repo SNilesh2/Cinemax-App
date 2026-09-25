@@ -45,5 +45,7 @@ dependencies {
     // Room Local Database
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
+    implementation(libs.room.paging)
+    implementation(libs.paging.common)
     ksp(libs.room.compiler)
 }
