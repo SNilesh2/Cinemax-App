@@ -13,6 +13,7 @@ import com.example.cinemaxapp.core.model.FeaturedBanner
 import com.example.cinemaxapp.core.model.Movie
 import com.example.cinemaxapp.core.model.MovieCategory
 import com.example.cinemaxapp.core.model.MovieDetails
+import com.example.cinemaxapp.core.model.SearchPerson
 import kotlin.collections.mapNotNull
 import kotlin.text.get
 import kotlin.toString
@@ -268,6 +269,24 @@ fun TmdbSearchResultDto.toSearchPersonRef(query: String, page: Int, position: In
     )
 }
 
+
+
+
+
+// ─── Entity → Domain Model Mapper for Search Persons ──────────────────────
+
+fun CreditEntity.toSearchPerson(): SearchPerson {
+    val profileUrl = when {
+        !this.profilePath.isNullOrBlank() ->
+            TmdbApiService.IMAGE_BASE_URL_W185 + this.profilePath
+        else -> ""
+    }
+    return SearchPerson(
+        id         = this.personId.toString(),
+        name       = this.name,
+        profileUrl = profileUrl,
+    )
+}
 
 
 // Entity → Domain Model Mappers for Movie Details

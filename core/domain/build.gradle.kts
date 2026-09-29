@@ -28,9 +28,13 @@ kotlin {
 dependencies {
     // Core modules
     implementation(project(":core:model"))
+    implementation(libs.androidx.paging.common)
     implementation(libs.core.ktx)
 
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // Paging — PagingData is referenced in SearchRepository
+    implementation(libs.paging.common)
 }

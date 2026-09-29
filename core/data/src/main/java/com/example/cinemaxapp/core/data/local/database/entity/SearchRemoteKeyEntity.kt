@@ -18,7 +18,4 @@ data class SearchRemoteKeyEntity(
 
     @ColumnInfo(name = "prev_page")
     val prevPage: Int?,
-
-    @ColumnInfo(name = "last_updated")
-    val lastUpdated: Long = System.currentTimeMillis()
 )

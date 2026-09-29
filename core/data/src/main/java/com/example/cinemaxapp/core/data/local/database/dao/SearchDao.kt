@@ -53,14 +53,6 @@ interface SearchDao {
     )
     fun getPersonsForQuery(query: String): Flow<List<CreditEntity>>
 
-    // ─── Movies & Credits Backing Table Operations ──────────────────────────
-
-    @Upsert
-    suspend fun upsertMovies(movies: List<MovieEntity>)
-
-    @Upsert
-    suspend fun upsertCredits(credits: List<CreditEntity>)
-
     // ─── SearchRemoteKeyEntity Operations ───────────────────────────────────
 
     @Upsert

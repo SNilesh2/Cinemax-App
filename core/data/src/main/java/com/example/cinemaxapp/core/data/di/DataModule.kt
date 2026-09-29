@@ -1,7 +1,9 @@
 package com.example.cinemaxapp.core.data.di
 
 import com.example.cinemaxapp.core.data.repository.MovieRepositoryImpl
+import com.example.cinemaxapp.core.data.repository.SearchRepositoryImpl
 import com.example.cinemaxapp.core.domain.repository.MovieRepository
+import com.example.cinemaxapp.core.domain.repository.SearchRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,4 +19,11 @@ abstract class DataModule {
     abstract fun bindMovieRepository(
         impl: MovieRepositoryImpl
     ): MovieRepository
+
+
+    @Binds
+    @Singleton
+    abstract fun bindSearchRepository(
+        impl: SearchRepositoryImpl
+    ): SearchRepository
 }
