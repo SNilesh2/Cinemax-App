@@ -6,6 +6,7 @@ import com.example.cinemaxapp.core.data.local.database.CinemaxDatabase
 import com.example.cinemaxapp.core.data.local.database.dao.CreditDao
 import com.example.cinemaxapp.core.data.local.database.dao.GenreDao
 import com.example.cinemaxapp.core.data.local.database.dao.MovieDao
+import com.example.cinemaxapp.core.data.local.database.dao.SearchDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -50,5 +51,12 @@ object DatabaseModule {
     @Singleton
     fun provideCreditDao(database: CinemaxDatabase): CreditDao {
         return database.creditDao()
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideSearchDao(database: CinemaxDatabase): SearchDao {
+        return database.searchDao()
     }
 }

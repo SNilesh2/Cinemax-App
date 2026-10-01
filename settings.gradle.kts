@@ -29,6 +29,7 @@ include(":feature:auth")
 include(":feature:home")
 include(":feature:movie_details")
 include(":feature:wishlist")
+include(":feature:search")
 
 // Core modules
 include(":core:designsystem")

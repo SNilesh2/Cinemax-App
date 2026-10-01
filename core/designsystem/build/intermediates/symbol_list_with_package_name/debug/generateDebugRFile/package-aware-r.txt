@@ -17,6 +17,7 @@ drawable ic_play
 drawable ic_profile
 drawable ic_search
 drawable ic_star
+drawable search_cloud
 font montserrat_medium
 font montserrat_regular
 font montserrat_semibold

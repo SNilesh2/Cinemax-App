@@ -7,6 +7,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.example.cinemaxapp.core.data.local.database.entity.CreditEntity
 import com.example.cinemaxapp.core.data.local.database.entity.MovieEntity
+import com.example.cinemaxapp.core.data.local.database.entity.MovieWithGenres
 import com.example.cinemaxapp.core.data.local.database.entity.SearchMovieRef
 import com.example.cinemaxapp.core.data.local.database.entity.SearchPersonRef
 import com.example.cinemaxapp.core.data.local.database.entity.SearchRemoteKeyEntity
@@ -24,6 +25,7 @@ interface SearchDao {
     suspend fun clearMovieRefsForQuery(query: String)
 
 
+    @Transaction
     @Query(
         """
         SELECT m.* FROM movies m
@@ -32,7 +34,7 @@ interface SearchDao {
         ORDER BY r.page ASC, r.position ASC
         """
     )
-    fun getMoviesForQueryPaging(query: String): PagingSource<Int, MovieEntity>
+    fun getMoviesForQueryPaging(query: String): PagingSource<Int, MovieWithGenres>
 
     // ─── SearchPersonRef Operations & Person Query ──────────────────────────
 

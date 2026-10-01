@@ -91,9 +91,31 @@ fun MovieEntity.toMovie(): Movie {
         rating      = this.voteAverage ?: 4.5,
         category    = "Action",
         releaseDate = this.releaseDate ?: "",
+        runtime = this.runtime,
     )
 }
 
+
+fun MovieWithGenres.toMovie(): Movie {
+    val entity = this.movie
+    val posterUrl = when {
+        !entity.posterPath.isNullOrBlank() ->
+            TmdbApiService.IMAGE_BASE_URL_W500 + entity.posterPath
+        else ->
+            "https://images.unsplash.com/photo-1635805737707-575885ab0820?w=600&auto=format&fit=crop&q=80"
+    }
+    val primaryGenre = this.genres.firstOrNull()?.name ?: ""
+    return Movie(
+        id           = entity.id.toString(),
+        title        = entity.title,
+        posterUrl    = posterUrl,
+        rating       = entity.voteAverage ?: 4.5,
+        category     = primaryGenre,
+        releaseDate  = entity.releaseDate ?: "",
+        runtime      = entity.runtime,
+        isWishlisted = false,
+    )
+}
 
 fun GenreEntity.toMovieCategory(): MovieCategory {
     return MovieCategory(
@@ -240,6 +262,13 @@ fun TmdbSearchResultDto.toMovieEntity(): MovieEntity {
     )
 }
 
+
+fun TmdbSearchResultDto.toCrossRef(genreId: Int): MovieGenreCrossRef {
+    return MovieGenreCrossRef(
+        movieId = this.id,
+        genreId = genreId,
+    )
+}
 
 fun TmdbSearchResultDto.toCreditEntity(): CreditEntity {
     return CreditEntity(

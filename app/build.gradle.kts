@@ -51,6 +51,7 @@ dependencies {
     implementation(project(":feature:home"))
     implementation(project(":feature:movie_details"))
     implementation(project(":feature:wishlist"))
+    implementation(project(":feature:search"))
 
     // Core modules
     implementation(project(":core:designsystem"))

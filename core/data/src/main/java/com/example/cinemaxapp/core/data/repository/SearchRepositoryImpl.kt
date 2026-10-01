@@ -49,7 +49,7 @@ class SearchRepositoryImpl @Inject constructor(
             },
         ).flow
             .map { pagingData ->
-                pagingData.map { movieEntity -> movieEntity.toMovie() }
+                pagingData.map { movieWithGenres -> movieWithGenres.toMovie() }
             }
     }
 

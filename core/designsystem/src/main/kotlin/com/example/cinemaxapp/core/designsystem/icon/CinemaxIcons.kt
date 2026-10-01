@@ -39,4 +39,7 @@ object CinemaxIcons {
     val Empty = R.drawable.ic_empty
 
     val Play = R.drawable.ic_play
+
+    //Search
+     val SearchCloud = R.drawable.search_cloud
 }

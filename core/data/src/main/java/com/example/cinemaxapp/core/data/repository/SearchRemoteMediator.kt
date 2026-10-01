@@ -9,8 +9,10 @@ import com.example.cinemaxapp.core.data.local.database.dao.CreditDao
 import com.example.cinemaxapp.core.data.local.database.dao.MovieDao
 import com.example.cinemaxapp.core.data.local.database.dao.SearchDao
 import com.example.cinemaxapp.core.data.local.database.entity.MovieEntity
+import com.example.cinemaxapp.core.data.local.database.entity.MovieWithGenres
 import com.example.cinemaxapp.core.data.local.database.entity.SearchRemoteKeyEntity
 import com.example.cinemaxapp.core.data.local.database.entity.toCreditEntity
+import com.example.cinemaxapp.core.data.local.database.entity.toCrossRef
 import com.example.cinemaxapp.core.data.local.database.entity.toMovieEntity
 import com.example.cinemaxapp.core.data.local.database.entity.toSearchMovieRef
 import com.example.cinemaxapp.core.data.local.database.entity.toSearchPersonRef
@@ -23,7 +25,7 @@ class SearchRemoteMediator(
     private val searchDao: SearchDao,
     private val movieDao: MovieDao,
     private val creditDao: CreditDao,
-) : RemoteMediator<Int, MovieEntity>() {
+) : RemoteMediator<Int, MovieWithGenres>() {
 
     override suspend fun initialize(): InitializeAction {
         return InitializeAction.LAUNCH_INITIAL_REFRESH
@@ -31,7 +33,7 @@ class SearchRemoteMediator(
 
     override suspend fun load(
         loadType: LoadType,
-        state: PagingState<Int, MovieEntity>
+        state: PagingState<Int, MovieWithGenres>
     ): MediatorResult {
         return try {
             val page = when (loadType) {
@@ -77,6 +79,14 @@ class SearchRemoteMediator(
             val movieEntities = movieResults.map { it.toMovieEntity() }
             if (movieEntities.isNotEmpty()) {
                 movieDao.upsertMovies(movieEntities)
+            }
+
+            // 1b. Persist genre cross-reference rows via canonical MovieDao.
+            val genreCrossRefs = movieResults.flatMap { dto ->
+                dto.genreIds?.map { genreId -> dto.toCrossRef(genreId) } ?: emptyList()
+            }
+            if (genreCrossRefs.isNotEmpty()) {
+                movieDao.upsertCrossRefs(genreCrossRefs)
             }
 
             // 2. Persist CreditEntity rows via canonical CreditDao.

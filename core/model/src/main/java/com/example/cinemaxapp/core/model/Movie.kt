@@ -8,6 +8,7 @@ data class Movie(
     val rating: Double,
     val category: String,
     val releaseDate: String = "",
+    val runtime: Int? = null,
     val isWishlisted: Boolean = false,
 )
 

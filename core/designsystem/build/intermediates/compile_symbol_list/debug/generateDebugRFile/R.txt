@@ -16,6 +16,7 @@ int drawable ic_play 0x0
 int drawable ic_profile 0x0
 int drawable ic_search 0x0
 int drawable ic_star 0x0
+int drawable search_cloud 0x0
 int font montserrat_medium 0x0
 int font montserrat_regular 0x0
 int font montserrat_semibold 0x0

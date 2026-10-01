@@ -38,6 +38,9 @@ import com.example.cinemaxapp.feature.home.navigation.homeScreen
 import com.example.cinemaxapp.feature.home.navigation.navigateToHome
 import com.example.cinemaxapp.feature.movie_details.navigation.movieDetailsScreen
 import com.example.cinemaxapp.feature.movie_details.navigation.navigateToMovieDetails
+import com.example.cinemaxapp.feature.search.navigation.SearchRoute
+import com.example.cinemaxapp.feature.search.navigation.navigateToSearch
+import com.example.cinemaxapp.feature.search.navigation.searchScreen
 import com.example.cinemaxapp.feature.wishlist.navigation.wishlistScreen
 import com.example.cinemaxapp.feature.wishlist.navigation.navigateToWishlist
 import com.example.cinemaxapp.feature.wishlist.navigation.WishlistRoute
@@ -47,7 +50,7 @@ import kotlin.collections.contains
 private val TOP_LEVEL_ROUTES = setOf(
     HomeRoute.ROUTE,
     WishlistRoute.ROUTE,
-    "search",
+    SearchRoute.ROUTE,
     "profile",
 )
 
@@ -56,7 +59,7 @@ private fun NavDestination?.toHomeBottomTab(): HomeBottomTab {
     return when (this?.route) {
         HomeRoute.ROUTE -> HomeBottomTab.HOME
         WishlistRoute.ROUTE -> HomeBottomTab.WISHLIST
-        "search" -> HomeBottomTab.SEARCH
+        SearchRoute.ROUTE -> HomeBottomTab.SEARCH
         "profile" -> HomeBottomTab.PROFILE
         else -> HomeBottomTab.HOME
     }
@@ -88,7 +91,7 @@ fun CinemaxNavHost(
                         when (tab) {
                             HomeBottomTab.HOME -> navController.navigateToHome()
                             HomeBottomTab.WISHLIST -> navController.navigateToWishlist()
-                            HomeBottomTab.SEARCH -> { /* Future search tab */ }
+                            HomeBottomTab.SEARCH ->  navController.navigateToSearch()
                             HomeBottomTab.PROFILE -> { /* Future profile tab */ }
                         }
                     }
@@ -117,6 +120,13 @@ fun CinemaxNavHost(
             wishlistScreen(
                 navController = navController,
                 onMovieClick  = { movieId ->
+                    movieId.toIntOrNull()?.let { navController.navigateToMovieDetails(it) }
+                },
+            )
+
+
+            searchScreen(
+                onMovieClick = { movieId ->
                     movieId.toIntOrNull()?.let { navController.navigateToMovieDetails(it) }
                 },
             )

@@ -17,6 +17,8 @@ import com.example.cinemaxapp.core.data.local.database.dao.GenreDao;
 import com.example.cinemaxapp.core.data.local.database.dao.GenreDao_Impl;
 import com.example.cinemaxapp.core.data.local.database.dao.MovieDao;
 import com.example.cinemaxapp.core.data.local.database.dao.MovieDao_Impl;
+import com.example.cinemaxapp.core.data.local.database.dao.SearchDao;
+import com.example.cinemaxapp.core.data.local.database.dao.SearchDao_Impl;
 import java.lang.Class;
 import java.lang.Override;
 import java.lang.String;
@@ -39,10 +41,12 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
 
   private volatile CreditDao _creditDao;
 
+  private volatile SearchDao _searchDao;
+
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(4) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(5) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `movies` (`id` INTEGER NOT NULL, `title` TEXT NOT NULL, `backdrop_path` TEXT, `poster_path` TEXT, `release_date` TEXT, `vote_average` REAL, `overview` TEXT DEFAULT '', `runtime` INTEGER DEFAULT 0, `tagline` TEXT DEFAULT '', `homepage` TEXT DEFAULT '', PRIMARY KEY(`id`))");
@@ -54,8 +58,11 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_movie_credit_ref_movie_id` ON `movie_credit_ref` (`movie_id`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_movie_credit_ref_person_id` ON `movie_credit_ref` (`person_id`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `wishlist_movies_ref` (`movie_id` INTEGER NOT NULL, `added_at` INTEGER NOT NULL, PRIMARY KEY(`movie_id`), FOREIGN KEY(`movie_id`) REFERENCES `movies`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `search_movies_ref` (`query` TEXT NOT NULL, `movie_id` INTEGER NOT NULL, `page` INTEGER NOT NULL, `position` INTEGER NOT NULL, PRIMARY KEY(`query`, `movie_id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `search_persons_ref` (`query` TEXT NOT NULL, `person_id` INTEGER NOT NULL, `page` INTEGER NOT NULL, `position` INTEGER NOT NULL, PRIMARY KEY(`query`, `person_id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `search_remote_keys` (`query` TEXT NOT NULL, `next_page` INTEGER, `prev_page` INTEGER, PRIMARY KEY(`query`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e18d518aea2f9f6ff66b2c799d421446')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7c2f4c0ca79140aff97345e1fd744403')");
       }
 
       @Override
@@ -67,6 +74,9 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
         db.execSQL("DROP TABLE IF EXISTS `credits`");
         db.execSQL("DROP TABLE IF EXISTS `movie_credit_ref`");
         db.execSQL("DROP TABLE IF EXISTS `wishlist_movies_ref`");
+        db.execSQL("DROP TABLE IF EXISTS `search_movies_ref`");
+        db.execSQL("DROP TABLE IF EXISTS `search_persons_ref`");
+        db.execSQL("DROP TABLE IF EXISTS `search_remote_keys`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -214,9 +224,50 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
                   + " Expected:\n" + _infoWishlistMoviesRef + "\n"
                   + " Found:\n" + _existingWishlistMoviesRef);
         }
+        final HashMap<String, TableInfo.Column> _columnsSearchMoviesRef = new HashMap<String, TableInfo.Column>(4);
+        _columnsSearchMoviesRef.put("query", new TableInfo.Column("query", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchMoviesRef.put("movie_id", new TableInfo.Column("movie_id", "INTEGER", true, 2, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchMoviesRef.put("page", new TableInfo.Column("page", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchMoviesRef.put("position", new TableInfo.Column("position", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysSearchMoviesRef = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesSearchMoviesRef = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoSearchMoviesRef = new TableInfo("search_movies_ref", _columnsSearchMoviesRef, _foreignKeysSearchMoviesRef, _indicesSearchMoviesRef);
+        final TableInfo _existingSearchMoviesRef = TableInfo.read(db, "search_movies_ref");
+        if (!_infoSearchMoviesRef.equals(_existingSearchMoviesRef)) {
+          return new RoomOpenHelper.ValidationResult(false, "search_movies_ref(com.example.cinemaxapp.core.data.local.database.entity.SearchMovieRef).\n"
+                  + " Expected:\n" + _infoSearchMoviesRef + "\n"
+                  + " Found:\n" + _existingSearchMoviesRef);
+        }
+        final HashMap<String, TableInfo.Column> _columnsSearchPersonsRef = new HashMap<String, TableInfo.Column>(4);
+        _columnsSearchPersonsRef.put("query", new TableInfo.Column("query", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchPersonsRef.put("person_id", new TableInfo.Column("person_id", "INTEGER", true, 2, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchPersonsRef.put("page", new TableInfo.Column("page", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchPersonsRef.put("position", new TableInfo.Column("position", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysSearchPersonsRef = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesSearchPersonsRef = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoSearchPersonsRef = new TableInfo("search_persons_ref", _columnsSearchPersonsRef, _foreignKeysSearchPersonsRef, _indicesSearchPersonsRef);
+        final TableInfo _existingSearchPersonsRef = TableInfo.read(db, "search_persons_ref");
+        if (!_infoSearchPersonsRef.equals(_existingSearchPersonsRef)) {
+          return new RoomOpenHelper.ValidationResult(false, "search_persons_ref(com.example.cinemaxapp.core.data.local.database.entity.SearchPersonRef).\n"
+                  + " Expected:\n" + _infoSearchPersonsRef + "\n"
+                  + " Found:\n" + _existingSearchPersonsRef);
+        }
+        final HashMap<String, TableInfo.Column> _columnsSearchRemoteKeys = new HashMap<String, TableInfo.Column>(3);
+        _columnsSearchRemoteKeys.put("query", new TableInfo.Column("query", "TEXT", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchRemoteKeys.put("next_page", new TableInfo.Column("next_page", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsSearchRemoteKeys.put("prev_page", new TableInfo.Column("prev_page", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysSearchRemoteKeys = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesSearchRemoteKeys = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoSearchRemoteKeys = new TableInfo("search_remote_keys", _columnsSearchRemoteKeys, _foreignKeysSearchRemoteKeys, _indicesSearchRemoteKeys);
+        final TableInfo _existingSearchRemoteKeys = TableInfo.read(db, "search_remote_keys");
+        if (!_infoSearchRemoteKeys.equals(_existingSearchRemoteKeys)) {
+          return new RoomOpenHelper.ValidationResult(false, "search_remote_keys(com.example.cinemaxapp.core.data.local.database.entity.SearchRemoteKeyEntity).\n"
+                  + " Expected:\n" + _infoSearchRemoteKeys + "\n"
+                  + " Found:\n" + _existingSearchRemoteKeys);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "e18d518aea2f9f6ff66b2c799d421446", "b87a36d0892dfe6fa6f1c35acf1803b6");
+    }, "7c2f4c0ca79140aff97345e1fd744403", "fafa4d8055f9dc81caec1c876dcaab05");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -227,7 +278,7 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "movies","genres","movie_genre_cross_ref","now_playing_movies_ref","credits","movie_credit_ref","wishlist_movies_ref");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "movies","genres","movie_genre_cross_ref","now_playing_movies_ref","credits","movie_credit_ref","wishlist_movies_ref","search_movies_ref","search_persons_ref","search_remote_keys");
   }
 
   @Override
@@ -250,6 +301,9 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
       _db.execSQL("DELETE FROM `credits`");
       _db.execSQL("DELETE FROM `movie_credit_ref`");
       _db.execSQL("DELETE FROM `wishlist_movies_ref`");
+      _db.execSQL("DELETE FROM `search_movies_ref`");
+      _db.execSQL("DELETE FROM `search_persons_ref`");
+      _db.execSQL("DELETE FROM `search_remote_keys`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
@@ -270,6 +324,7 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
     _typeConvertersMap.put(MovieDao.class, MovieDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(GenreDao.class, GenreDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(CreditDao.class, CreditDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(SearchDao.class, SearchDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -326,6 +381,20 @@ public final class CinemaxDatabase_Impl extends CinemaxDatabase {
           _creditDao = new CreditDao_Impl(this);
         }
         return _creditDao;
+      }
+    }
+  }
+
+  @Override
+  public SearchDao searchDao() {
+    if (_searchDao != null) {
+      return _searchDao;
+    } else {
+      synchronized(this) {
+        if(_searchDao == null) {
+          _searchDao = new SearchDao_Impl(this);
+        }
+        return _searchDao;
       }
     }
   }
