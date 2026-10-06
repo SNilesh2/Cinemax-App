@@ -1,5 +1,6 @@
 package com.example.cinemaxapp.feature.search;
 
+import androidx.lifecycle.SavedStateHandle;
 import com.example.cinemaxapp.core.domain.usecase.GetSearchPersonsUseCase;
 import com.example.cinemaxapp.core.domain.usecase.SearchMoviesUseCase;
 import dagger.internal.DaggerGenerated;
@@ -25,29 +26,33 @@ import javax.inject.Provider;
     "deprecation"
 })
 public final class SearchViewModel_Factory implements Factory<SearchViewModel> {
+  private final Provider<SavedStateHandle> savedStateHandleProvider;
+
   private final Provider<SearchMoviesUseCase> searchMoviesUseCaseProvider;
 
   private final Provider<GetSearchPersonsUseCase> getSearchPersonsUseCaseProvider;
 
-  public SearchViewModel_Factory(Provider<SearchMoviesUseCase> searchMoviesUseCaseProvider,
+  public SearchViewModel_Factory(Provider<SavedStateHandle> savedStateHandleProvider,
+      Provider<SearchMoviesUseCase> searchMoviesUseCaseProvider,
       Provider<GetSearchPersonsUseCase> getSearchPersonsUseCaseProvider) {
+    this.savedStateHandleProvider = savedStateHandleProvider;
     this.searchMoviesUseCaseProvider = searchMoviesUseCaseProvider;
     this.getSearchPersonsUseCaseProvider = getSearchPersonsUseCaseProvider;
   }
 
   @Override
   public SearchViewModel get() {
-    return newInstance(searchMoviesUseCaseProvider.get(), getSearchPersonsUseCaseProvider.get());
+    return newInstance(savedStateHandleProvider.get(), searchMoviesUseCaseProvider.get(), getSearchPersonsUseCaseProvider.get());
   }
 
-  public static SearchViewModel_Factory create(
+  public static SearchViewModel_Factory create(Provider<SavedStateHandle> savedStateHandleProvider,
       Provider<SearchMoviesUseCase> searchMoviesUseCaseProvider,
       Provider<GetSearchPersonsUseCase> getSearchPersonsUseCaseProvider) {
-    return new SearchViewModel_Factory(searchMoviesUseCaseProvider, getSearchPersonsUseCaseProvider);
+    return new SearchViewModel_Factory(savedStateHandleProvider, searchMoviesUseCaseProvider, getSearchPersonsUseCaseProvider);
   }
 
-  public static SearchViewModel newInstance(SearchMoviesUseCase searchMoviesUseCase,
-      GetSearchPersonsUseCase getSearchPersonsUseCase) {
-    return new SearchViewModel(searchMoviesUseCase, getSearchPersonsUseCase);
+  public static SearchViewModel newInstance(SavedStateHandle savedStateHandle,
+      SearchMoviesUseCase searchMoviesUseCase, GetSearchPersonsUseCase getSearchPersonsUseCase) {
+    return new SearchViewModel(savedStateHandle, searchMoviesUseCase, getSearchPersonsUseCase);
   }
 }

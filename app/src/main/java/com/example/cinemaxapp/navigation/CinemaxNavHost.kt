@@ -113,6 +113,9 @@ fun CinemaxNavHost(
                 onSeeAllClick = {
                     // Future: navigate to "See All" movies screen
                 },
+                onSearchClick = { query ->
+                    navController.navigateToSearch(query)
+                }
             )
 
             movieDetailsScreen(navController = navController)

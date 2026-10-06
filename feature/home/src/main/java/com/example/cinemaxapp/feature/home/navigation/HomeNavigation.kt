@@ -32,12 +32,14 @@ fun NavController.navigateToHome(navOptions: NavOptions? = null) {
 fun NavGraphBuilder.homeScreen(
     onMovieClick: (String) -> Unit = {},
     onSeeAllClick: () -> Unit = {},
+    onSearchClick: (String) -> Unit = {},
 ) {
     composable(route = HomeRoute.ROUTE) {
 
         HomeScreen(
             onMovieClick = onMovieClick,
             onSeeAllClick = onSeeAllClick,
+            onSearchClick = onSearchClick,
         )
     }
 }

@@ -62,6 +62,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onMovieClick: (String) -> Unit = {},
     onSeeAllClick: () -> Unit = {},
+    onSearchClick: (String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -72,6 +73,7 @@ fun HomeScreen(
         onSearchQueryChange = viewModel::onSearchQueryChanged,
         onMovieClick = onMovieClick,
         onSeeAllClick = onSeeAllClick,
+        onSearchClick = onSearchClick,
     )
 }
 
@@ -83,6 +85,7 @@ fun HomeScreenContent(
     onSearchQueryChange: (String) -> Unit = {},
     onMovieClick: (String) -> Unit = {},
     onSeeAllClick: () -> Unit = {},
+    onSearchClick: (String) -> Unit = {},
 ) {
     Box(
         modifier = modifier
@@ -126,6 +129,7 @@ fun HomeScreenContent(
                         query = uiState.searchQuery,
                         onQueryChange = onSearchQueryChange,
                         onFilterClick = {},
+                        onSearchAction = { onSearchClick(uiState.searchQuery) },
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -251,7 +255,9 @@ private fun HomeSearchBar(
                 painter = painterResource(id = CinemaxIcons.Search),
                 contentDescription = "Search",
                 tint = CinemaxTheme.colors.grey,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable{ onSearchAction() },
             )
 
             Spacer(modifier = Modifier.width(8.dp))
